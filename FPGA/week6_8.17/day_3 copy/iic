@@ -1,0 +1,24 @@
+module iic (
+    input               clk         ,
+    input               rst_n       ,
+    input               iic_start   ,//开始通信信号
+    input       [6:0]   s_addr      ,//从机s地址slave 主机h（host）
+    input               rw          ,// 读写控制
+    input       [7:0]   data_out    ,//要发送的信号
+
+    inout               sdc         ,//数据线
+
+    output  reg [7:0]   data_in     ,//接收到的信号
+    output  reg         busy        ,// 忙标志
+    output              scl          //时钟线     
+);
+localparam  IDLE    =3'b000 ,//空闲态
+            START   =3'b001 ,//起始态
+            TX_DATA =3'b010 ,//发送从机数据/设备地址
+            RX_DATA =3'b011 ,//接收从机数据
+            TX_ACK  =3'b100 ,//主机发送应答
+            RX_ACK  =3'b101 ,//主机接收应答
+            STOP    =3'b110 ;//
+reg [2:0]   c_state         ,//
+            n_state         ;//
+endmodule
