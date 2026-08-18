@@ -10,8 +10,8 @@
 //
 // 端口:
 //   data_in   写入数据
-//   wr_en     写使能(当前写fifo满时内部自动屏蔽, 防止溢出)
-//   rd_en     读使能(当前读fifo空时内部自动屏蔽, 防止读空)
+//   wr_en     写使能当前写fifo满时内部自动屏蔽, 防止溢出
+//   rd_en     读使能当前读fifo空时内部自动屏蔽, 防止读空
 //   data_out  读出的数据
 //   rd_valid  读有效, 此周期 data_out 有效
 //   wr_full   当前写入的 fifo 满
