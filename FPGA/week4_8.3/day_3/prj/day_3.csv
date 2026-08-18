@@ -1,0 +1,37 @@
+# Copyright (C) 2018  Intel Corporation. All rights reserved.
+# Your use of Intel Corporation's design tools, logic functions 
+# and other software and tools, and its AMPP partner logic 
+# functions, and any output files from any of the foregoing 
+# (including device programming or simulation files), and any 
+# associated documentation or information are expressly subject 
+# to the terms and conditions of the Intel Program License 
+# Subscription Agreement, the Intel Quartus Prime License Agreement,
+# the Intel FPGA IP License Agreement, or other applicable license
+# agreement, including, without limitation, that your use is for
+# the sole purpose of programming logic devices manufactured by
+# Intel and sold by Intel or its authorized distributors.  Please
+# refer to the applicable agreement for further details.
+
+# Quartus Prime Version 18.1.0 Build 625 09/12/2018 SJ Standard Edition
+# File: E:\FPGA\shiyan\week4_8.3\day_3\prj\day_3.csv
+# Generated on: Fri Aug 07 10:00:54 2026
+
+# Note: The column header names should not be changed if you wish to import this .csv file into the Quartus Prime software.
+
+To,Direction,Location,I/O Bank,VREF Group,Fitter Location,I/O Standard,Reserved,Current Strength,Slew Rate,Differential Pair,Strict Preservation
+clk,Input,PIN_E1,1,B1_N0,PIN_E1,3.3-V LVTTL,,,,,
+dig[7],Output,PIN_A5,8,B8_N0,PIN_A5,3.3-V LVTTL,,,,,
+dig[6],Output,PIN_B8,8,B8_N0,PIN_B8,3.3-V LVTTL,,,,,
+dig[5],Output,PIN_A7,8,B8_N0,PIN_A7,3.3-V LVTTL,,,,,
+dig[4],Output,PIN_B6,8,B8_N0,PIN_B6,3.3-V LVTTL,,,,,
+dig[3],Output,PIN_B5,8,B8_N0,PIN_B5,3.3-V LVTTL,,,,,
+dig[2],Output,PIN_A6,8,B8_N0,PIN_A6,3.3-V LVTTL,,,,,
+dig[1],Output,PIN_A8,8,B8_N0,PIN_A8,3.3-V LVTTL,,,,,
+dig[0],Output,PIN_B7,8,B8_N0,PIN_B7,3.3-V LVTTL,,,,,
+rst,Input,PIN_N11,4,B4_N0,PIN_N11,3.3-V LVTTL,,,,,
+sel[5],Output,PIN_A4,8,B8_N0,PIN_A4,3.3-V LVTTL,,,,,
+sel[4],Output,PIN_B4,8,B8_N0,PIN_B4,3.3-V LVTTL,,,,,
+sel[3],Output,PIN_A3,8,B8_N0,PIN_A3,3.3-V LVTTL,,,,,
+sel[2],Output,PIN_B3,8,B8_N0,PIN_B3,3.3-V LVTTL,,,,,
+sel[1],Output,PIN_A2,8,B8_N0,PIN_A2,3.3-V LVTTL,,,,,
+sel[0],Output,PIN_B1,1,B1_N0,PIN_B1,3.3-V LVTTL,,,,,

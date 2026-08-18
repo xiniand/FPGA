@@ -1,0 +1,30 @@
+=== key->tx trigger test, tx_data=xx ===
+flag RISING  @790
+tick        @104250 flag=0 tx=1 tx_done=0
+START bit   @104270 (falling edge)
+tick        @208410 flag=0 tx=0 tx_done=0
+tick        @312570 flag=0 tx=1 tx_done=0
+START bit   @312590 (falling edge)
+tick        @416730 flag=0 tx=0 tx_done=0
+tick        @520890 flag=0 tx=1 tx_done=0
+START bit   @520910 (falling edge)
+tick        @625050 flag=0 tx=0 tx_done=0
+tick        @729210 flag=0 tx=1 tx_done=0
+START bit   @729230 (falling edge)
+tick        @833370 flag=0 tx=0 tx_done=0
+tick        @937530 flag=0 tx=1 tx_done=0
+START bit   @937550 (falling edge)
+tick        @1041690 flag=0 tx=0 tx_done=0
+tick        @1145850 flag=0 tx=0 tx_done=0
+tx_done     @1145870
+tick        @1250010 flag=0 tx=1 tx_done=0
+tick        @1354170 flag=0 tx=1 tx_done=0
+tick        @1458330 flag=0 tx=1 tx_done=0
+tick        @1562490 flag=0 tx=1 tx_done=0
+tick        @1666650 flag=0 tx=1 tx_done=0
+tick        @1770810 flag=0 tx=1 tx_done=0
+tick        @1874970 flag=0 tx=1 tx_done=0
+tick        @1979130 flag=0 tx=1 tx_done=0
+tick        @2083290 flag=0 tx=1 tx_done=0
+tick        @2187450 flag=0 tx=1 tx_done=0
+=== SIM END ===

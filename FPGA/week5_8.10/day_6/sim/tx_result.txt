@@ -1,0 +1,30 @@
+=== UART TX sim: tx_data=xx parity=x ===
+=== expect: start0 + 1 0 1 0 1 0 1 0 (LSB first) + parity0 + stop1 ===
+tick @104350 : tx=1 tx_done=0
+START BIT (falling edge) @104370
+tick @208510 : tx=0 tx_done=0
+tick @312670 : tx=1 tx_done=0
+START BIT (falling edge) @312690
+tick @416830 : tx=0 tx_done=0
+tick @520990 : tx=1 tx_done=0
+START BIT (falling edge) @521010
+tick @625150 : tx=0 tx_done=0
+tick @729310 : tx=1 tx_done=0
+START BIT (falling edge) @729330
+tick @833470 : tx=0 tx_done=0
+tick @937630 : tx=1 tx_done=0
+START BIT (falling edge) @937650
+tick @1041790 : tx=0 tx_done=0
+tick @1145950 : tx=0 tx_done=0
+tx_done PULSE @1145970
+tick @1250110 : tx=1 tx_done=0
+tick @1354270 : tx=1 tx_done=0
+tick @1458430 : tx=1 tx_done=0
+tick @1562590 : tx=1 tx_done=0
+tick @1666750 : tx=1 tx_done=0
+tick @1770910 : tx=1 tx_done=0
+tick @1875070 : tx=1 tx_done=0
+tick @1979230 : tx=1 tx_done=0
+tick @2083390 : tx=1 tx_done=0
+tick @2187550 : tx=1 tx_done=0
+=== SIM END ===

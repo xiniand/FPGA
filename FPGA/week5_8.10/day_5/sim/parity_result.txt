@@ -1,0 +1,4 @@
+--- uart even-parity test ---
+PARITY PASS(1): data=55 parity_error=0
+PARITY PASS(2): wrong-parity detected, parity_error=1
+PARITY PASS(3): data=a5 parity_error=0

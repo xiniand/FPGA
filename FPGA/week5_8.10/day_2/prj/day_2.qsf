@@ -1,0 +1,121 @@
+# -------------------------------------------------------------------------- #
+#
+# Copyright (C) 2018  Intel Corporation. All rights reserved.
+# Your use of Intel Corporation's design tools, logic functions 
+# and other software and tools, and its AMPP partner logic 
+# functions, and any output files from any of the foregoing 
+# (including device programming or simulation files), and any 
+# associated documentation or information are expressly subject 
+# to the terms and conditions of the Intel Program License 
+# Subscription Agreement, the Intel Quartus Prime License Agreement,
+# the Intel FPGA IP License Agreement, or other applicable license
+# agreement, including, without limitation, that your use is for
+# the sole purpose of programming logic devices manufactured by
+# Intel and sold by Intel or its authorized distributors.  Please
+# refer to the applicable agreement for further details.
+#
+# -------------------------------------------------------------------------- #
+#
+# Quartus Prime
+# Version 18.1.0 Build 625 09/12/2018 SJ Standard Edition
+# Date created = 09:26:31  August 11, 2026
+#
+# -------------------------------------------------------------------------- #
+#
+# Notes:
+#
+# 1) The default values for assignments are stored in the file:
+#		day_2_assignment_defaults.qdf
+#    If this file doesn't exist, see file:
+#		assignment_defaults.qdf
+#
+# 2) Altera recommends that you do not modify this file. This
+#    file is updated automatically by the Quartus Prime software
+#    and any changes you make may be lost or overwritten.
+#
+# -------------------------------------------------------------------------- #
+
+
+set_global_assignment -name FAMILY "Cyclone IV E"
+set_global_assignment -name DEVICE EP4CE6F17C8
+set_global_assignment -name TOP_LEVEL_ENTITY top
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION 18.1.0
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "09:26:31  AUGUST 11, 2026"
+set_global_assignment -name LAST_QUARTUS_VERSION "18.1.0 Standard Edition"
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name DEVICE_FILTER_PACKAGE FBGA
+set_global_assignment -name DEVICE_FILTER_PIN_COUNT 256
+set_global_assignment -name DEVICE_FILTER_SPEED_GRADE 8
+set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 1
+set_global_assignment -name NOMINAL_CORE_SUPPLY_VOLTAGE 1.2V
+set_global_assignment -name EDA_SIMULATION_TOOL "ModelSim-Altera (Verilog)"
+set_global_assignment -name EDA_TIME_SCALE "1 ns" -section_id eda_simulation
+set_global_assignment -name EDA_OUTPUT_DATA_FORMAT "VERILOG HDL" -section_id eda_simulation
+set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
+set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+set_location_assignment PIN_E1 -to clk
+set_location_assignment PIN_N11 -to rst
+set_location_assignment PIN_B1 -to sel[5]
+set_location_assignment PIN_A2 -to sel[4]
+set_location_assignment PIN_B3 -to sel[3]
+set_location_assignment PIN_A3 -to sel[2]
+set_location_assignment PIN_B4 -to sel[1]
+set_location_assignment PIN_A4 -to sel[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to clk
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to rst
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to sel[5]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to sel[4]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to sel[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to sel[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to sel[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to sel[0]
+set_location_assignment PIN_A5 -to dig[7]
+set_location_assignment PIN_B8 -to dig[6]
+set_location_assignment PIN_A7 -to dig[5]
+set_location_assignment PIN_B6 -to dig[4]
+set_location_assignment PIN_B5 -to dig[3]
+set_location_assignment PIN_A6 -to dig[2]
+set_location_assignment PIN_A8 -to dig[1]
+set_location_assignment PIN_B7 -to dig[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to dig[7]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to dig[6]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to dig[5]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to dig[4]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to dig[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to dig[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to dig[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to dig[0]
+set_location_assignment PIN_E15 -to key[1]
+set_location_assignment PIN_E16 -to key[0]
+set_location_assignment PIN_M9 -to sw
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to key[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to key[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to sw
+set_global_assignment -name EDA_TEST_BENCH_ENABLE_STATUS TEST_BENCH_MODE -section_id eda_simulation
+set_global_assignment -name EDA_NATIVELINK_SIMULATION_TEST_BENCH test -section_id eda_simulation
+set_global_assignment -name EDA_TEST_BENCH_NAME test -section_id eda_simulation
+set_global_assignment -name EDA_DESIGN_INSTANCE_NAME NA -section_id test
+set_global_assignment -name EDA_TEST_BENCH_MODULE_NAME test -section_id test
+set_global_assignment -name VERILOG_FILE ../src/smg_watch.v
+set_global_assignment -name VERILOG_FILE ../src/top.v
+set_global_assignment -name VERILOG_FILE ../src/smg.v
+set_global_assignment -name VERILOG_FILE ../src/key.v
+set_global_assignment -name MIF_FILE ip/rom.mif
+set_global_assignment -name QIP_FILE ip/rom_data.qip
+set_global_assignment -name QIP_FILE ip/clock.qip
+set_global_assignment -name TCL_SCRIPT_FILE ../../../week4_8.3/day_5/prj/day_5.tcl
+set_global_assignment -name QIP_FILE ram.qip
+set_global_assignment -name QIP_FILE ip/ram/ram_data.qip
+set_global_assignment -name QIP_FILE ip/pll/clock.qip
+set_global_assignment -name QIP_FILE ip/ram/ram_data_2.qip
+set_global_assignment -name EDA_TEST_BENCH_NAME test_watch -section_id eda_simulation
+set_global_assignment -name EDA_DESIGN_INSTANCE_NAME NA -section_id test_watch
+set_global_assignment -name EDA_TEST_BENCH_MODULE_NAME test_watch -section_id test_watch
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_global_assignment -name EDA_TEST_BENCH_FILE ../sim/test.v -section_id test
+set_global_assignment -name EDA_TEST_BENCH_FILE ../src/test_watch.v -section_id test_watch
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

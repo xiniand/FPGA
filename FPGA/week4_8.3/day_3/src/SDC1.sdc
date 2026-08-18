@@ -1,0 +1,5 @@
+create_clock -name clk -period 20 [get_ports clk]
+set_input_delay -max 2.0 -clock clk [get_ports din*]
+set_input_delay -min 1.0 -clock clk [get_ports din*]
+set_output_delay -max 2.0 -clock clk [get_ports dout]
+set_output_delay -min 1.0 -clock clk [get_ports dout]

@@ -57,6 +57,35 @@ xst/
 *.srp
 *.stx
 
+# --- ModelSim / QuestaSim ---
+**/simulation/modelsim/
+**/sim/work/
+**/rtl_work/
+work/
+*.wlf
+wlft*
+transcript
+msim_transcript
+modelsim.ini
+*.sdo
+*.vo
+*.sft
+*.xrf
+*.vstf
+*.qdb
+*.qpg
+*.qtl
+_vmake
+
+# --- Quartus 输出 / 生成物 ---
+output_files/
+db/
+incremental_db/
+greybox_tmp/
+.qsys_edit/
+*.sof
+*.cdf
+
 # --- 通用 ---
 *.swp
 *.swo

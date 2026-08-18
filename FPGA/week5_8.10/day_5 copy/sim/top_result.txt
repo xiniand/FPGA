@@ -1,0 +1,3 @@
+--- uart tx/rx test (serial tool mode) ---
+TX PASS: fpga send 5a, pc recv 5a
+RX PASS: pc send c3, fpga recv c3
