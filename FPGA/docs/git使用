@@ -1,0 +1,5 @@
+以后每天的本地习惯就是：
+改完代码 → git add . → 
+git commit -m "说明" → 
+git log 看历史。
+同步到 GitHub 执行 git push 
