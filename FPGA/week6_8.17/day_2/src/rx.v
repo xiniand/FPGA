@@ -7,6 +7,7 @@ module rx (
     output  reg         parity_error,
     output  reg [7:0]   data    
 );
+parameter   MODE        = 2;    //0无校验，1奇校验，2偶校验
 parameter   CLK_FREQ    = 50_000_000                 ;// 系统时钟频率 
 parameter   BAUD_RATE   = 9600                      ;// 目标波特率
 localparam  COUNT_MAX   = (CLK_FREQ / BAUD_RATE) - 1 ;
@@ -94,9 +95,11 @@ always @(*) begin
         end 
         RECX :begin
             if(rx_mid)begin//发送数据信号tick
-                if(baud_cnt == 7)begin
+                if(baud_cnt == 7 && (MODE !=0))begin
                     n_state = PARITY;
                 end
+                else if(MODE == 0)
+                    n_state = STOP;
                 else begin
                     n_baud_cnt = baud_cnt + 1;
                     n_state = RECX;
@@ -142,7 +145,11 @@ always @(posedge clk or negedge rst_n) begin
     if(!rst_n)
         parity_error <= 0;
     else if(c_state == PARITY && rx_mid)
-        parity_error <= (rx_rg[1] != ^data_rg); // 用当前采到的校验位判定偶校验
+        case (MODE)
+            1: parity_error <= (rx_rg[1] != ^data_rg); // 用当前采到的校验位判定奇校验
+            2: parity_error <= (rx_rg[1] != ^data_rg); // 用当前采到的校验位判定偶校验
+            default: ;
+        endcase
 end
 //停止态时 中间采样拉高使能将 data_rg寄存器中的数据给data
 always @(posedge clk or negedge rst_n) begin

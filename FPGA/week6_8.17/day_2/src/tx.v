@@ -8,7 +8,7 @@ module tx (
     output  reg     tx      ,//发送的数据
     output  reg     tx_done  //发送一组数据完成信号
 );
-    
+parameter   MODE    = 2;    //0无校验，1奇校验，2偶校验
 localparam  IDLE    = 3'b000,//空闲态
             START   = 3'b001,//准备数据
             SEND    = 3'b010,//发送数据
@@ -71,8 +71,10 @@ always @(*) begin
         end 
         SEND    :begin
             if(tick)//八位数据位
-                if(n_cnt_bit == 7)
+                if(n_cnt_bit == 7 && (MODE !=0))
                     n_state = PARITY;
+                else if(MODE == 0)
+                    n_state = STOP;
                 else begin 
                     n_cnt_bit = cnt_bit + 1;
                     n_state = SEND;
@@ -115,7 +117,11 @@ always @(posedge clk or negedge rst_n) begin
     else if(c_state == START && tick)begin
         tx          <= 0    ;
         data_rg     <= tx_data ;//寄存要发送的数据
-        parity_bit  <= ^tx_data;
+        case (MODE)
+            1: parity_bit  <= ~^tx_data;
+            2: parity_bit  <= ^tx_data;
+            default: ;
+        endcase
 	 end
     else if(c_state == SEND && tick)begin
         tx          <= data_rg[0];

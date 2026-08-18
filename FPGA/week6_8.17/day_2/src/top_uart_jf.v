@@ -10,6 +10,7 @@ module top_uart_jf (
     output      [7:0]   dig         ,
     output      [5:0]   sel
 );
+parameter MODE = 2;     //0无校验，1奇校验，2偶校验
 parameter TIME      = 25_000_000    ;
 parameter CLK_FREQ  = 50_000_000    ;//系统时钟频率
 parameter BAUD_RATE = 9600          ;//目标波特率
@@ -95,7 +96,9 @@ key key_u(
     .flag           (flag_tx_star   )
 );
 //信号发送器：由fifo_rd_req触发，自动发送FIFO中的数据
-tx  tx_u(
+tx #(
+    .MODE(MODE)
+) tx_u(
     .clk            (clk            ),
     .rst_n          (rst_n          ),
     .tick           (tick           ),
@@ -107,7 +110,8 @@ tx  tx_u(
 //信号接收器
 rx #(
     .CLK_FREQ (CLK_FREQ ),
-    .BAUD_RATE(BAUD_RATE)
+    .BAUD_RATE(BAUD_RATE),
+    .MODE(MODE)
 ) rx_u(
     .clk            (clk            ),
     .rst_n          (rst_n          ),
