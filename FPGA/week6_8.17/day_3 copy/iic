@@ -12,6 +12,10 @@ module iic (
     output  reg         busy        ,// 忙标志
     output              scl          //时钟线     
 );
+parameter   CLK_SYS = 50_000_000,
+            CLK_IIC = 100_000   ,
+            CNT_CLK = 249       ;// (CLK_SYS/CLK_IIC)/2-1
+
 localparam  IDLE    =3'b000 ,//空闲态
             START   =3'b001 ,//起始态
             TX_DATA =3'b010 ,//发送从机数据/设备地址
@@ -21,7 +25,42 @@ localparam  IDLE    =3'b000 ,//空闲态
             STOP    =3'b110 ;//
 reg [2:0]   c_state         ,//
             n_state         ;//
-
+reg         scl_rg          ;
+reg [7:0]   cnt_scl         ;
+wire        add_cnt_scl     ,
+            end_cnt_scl     ;
+wire        scl_pos         ,//scl上升沿
+            scl_neg         ;//scl下降沿
+//scl时钟 半个周期计数器
+always @(posedge clk or negedge rst_n) begin
+    if(!rst_n)
+        cnt_scl <= 0;
+    else if(add_cnt_scl)begin
+        if(end_cnt_scl)
+            cnt_scl <= 0;
+        else 
+            cnt_scl <= cnt_scl + 1;
+    end
+end
+assign  add_cnt_scl = ~(c_state == IDLE || c_state == STOP);
+assign  end_cnt_scl = cnt_scl == CNT_CLK;
+//产生scl时钟 100kHZ 50%占空比
+always @(posedge clk or negedge rst_n) begin
+    if(!rst_n)begin
+        scl     <= 1;
+        scl_rg  <= 1;
+    end 
+    else if(c_state == IDLE || c_state == STOP)begin
+        scl     <= 1;
+        scl_rg  <= 1;
+    end
+    else if(cnt_scl == CNT_CLK)begin
+        scl_rg  <= ~scl_rg;
+        scl     <= ~scl_rg;
+    end
+end
+assign  scl_pos <= end_cnt_scl && (scl_rg == 0);
+assign  scl_neg <= end_cnt_scl && (scl_rg == 1);
 //状态切换
 always @(posedge clk or negedge rst_n) begin
     if(!rst_n)
@@ -33,7 +72,7 @@ end
 always @(*) begin
     case (c_state)
         IDLE    :begin
-
+            if()
         end 
         START   :begin
 
