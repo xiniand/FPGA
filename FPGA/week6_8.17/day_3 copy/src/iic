@@ -3,34 +3,42 @@ module iic (
     input               rst_n       ,
     input               iic_start   ,//开始通信信号
     input       [6:0]   s_addr      ,//从机s地址slave 主机h（host）
-    input               rw          ,// 读写控制
+    input               rw          ,// 读写控制0读1写
     input       [7:0]   data_out    ,//要发送的信号
 
-    inout               sdc         ,//数据线
-
+    inout               sda         ,//数据线总线
+    inout               scl         ,//时钟线     
     output  reg [7:0]   data_in     ,//接收到的信号
-    output  reg         busy        ,// 忙标志
-    output              scl          //时钟线     
+    output  reg         busy         // 忙标志
+
 );
 parameter   CLK_SYS = 50_000_000,
             CLK_IIC = 100_000   ,
             CNT_CLK = 249       ;// (CLK_SYS/CLK_IIC)/2-1
 
-localparam  IDLE    =3'b000 ,//空闲态
-            START   =3'b001 ,//起始态
-            TX_DATA =3'b010 ,//发送从机数据/设备地址
-            RX_DATA =3'b011 ,//接收从机数据
-            TX_ACK  =3'b100 ,//主机发送应答
-            RX_ACK  =3'b101 ,//主机接收应答
-            STOP    =3'b110 ;//
+localparam  IDLE      = 11'b0           ,//空闲
+            START     = 11'b1           ,//开始状态
+            ID        = 11'b10          ,//主从联系
+            ACK1      = 11'b100         ,//从机->主机
+            SENDDATA  = 11'b1000        ,//写数据状态
+            ACK2      = 11'b10000       ,//从->主
+            STOP      = 11'b100000      ,//IIC工作结束状态
+            RECVDATA  = 11'b1000000     ,//读数据状态
+            ACK3      = 11'b10000000    ,//主->从
+            START1    = 11'b100000000   ,//虚写的开始信号
+            ID1       = 11'b1000000000  ,//虚写主找从
+            ACK4      = 11'b10000000000 ;//从->主
 reg [2:0]   c_state         ,//
             n_state         ;//
-reg         scl_rg          ;
 reg [7:0]   cnt_scl         ;
 wire        add_cnt_scl     ,
             end_cnt_scl     ;
 wire        scl_pos         ,//scl上升沿
             scl_neg         ;//scl下降沿
+reg         sda_oe          ;// 输出使能 (1: 主机驱动SDA, 0: 释放SDA)
+reg         sda_out         ;// 输出电平
+reg [3:0]   cnt_bit         ;
+assign sda = sda_oe ? sda_out : 1'bz;
 //scl时钟 半个周期计数器
 always @(posedge clk or negedge rst_n) begin
     if(!rst_n)
@@ -48,19 +56,16 @@ assign  end_cnt_scl = cnt_scl == CNT_CLK;
 always @(posedge clk or negedge rst_n) begin
     if(!rst_n)begin
         scl     <= 1;
-        scl_rg  <= 1;
     end 
     else if(c_state == IDLE || c_state == STOP)begin
         scl     <= 1;
-        scl_rg  <= 1;
     end
     else if(cnt_scl == CNT_CLK)begin
-        scl_rg  <= ~scl_rg;
-        scl     <= ~scl_rg;
+        scl     <= ~scl;
     end
 end
-assign  scl_pos <= end_cnt_scl && (scl_rg == 0);
-assign  scl_neg <= end_cnt_scl && (scl_rg == 1);
+assign  scl_pos = end_cnt_scl && (scl == 0);//scl时钟上升沿
+assign  scl_neg = end_cnt_scl && (scl == 1);//scl时钟下降沿
 //状态切换
 always @(posedge clk or negedge rst_n) begin
     if(!rst_n)
@@ -72,32 +77,49 @@ end
 always @(*) begin
     case (c_state)
         IDLE    :begin
-            if()
+            if(iic_start)
+                n_state = START;
+            else
+                n_state = c_state;
         end 
         START   :begin
+            if(scl_pos)
+                n_state = ID;
+            else
+                n_state = c_state;
+        end 
+        ID      :begin
+
+        end 
+        ACK1    :begin
 
         end 
         TX_DATA :begin
 
         end 
-        RX_DATA :begin
-
-        end 
-        TX_ACK  :begin
-
-        end 
-        RX_ACK  :begin
+        ACK2    :begin
 
         end 
         STOP    :begin
 
-        end  
+        end 
+        RX_DATA :begin
+
+        end 
+        ACK3    :begin
+
+        end 
+        START1  :begin
+
+        end 
+        ID1     :begin
+
+        end
+        ACK4    :begin
+
+        end   
         default:n_state = IDLE; 
     endcase
-
-
 end
-
-
 
 endmodule
