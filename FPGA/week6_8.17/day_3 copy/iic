@@ -21,4 +21,44 @@ localparam  IDLE    =3'b000 ,//空闲态
             STOP    =3'b110 ;//
 reg [2:0]   c_state         ,//
             n_state         ;//
+
+//状态切换
+always @(posedge clk or negedge rst_n) begin
+    if(!rst_n)
+        c_state <= 0;
+    else
+        c_state <= n_state;
+end
+//状态转移
+always @(*) begin
+    case (c_state)
+        IDLE    :begin
+
+        end 
+        START   :begin
+
+        end 
+        TX_DATA :begin
+
+        end 
+        RX_DATA :begin
+
+        end 
+        TX_ACK  :begin
+
+        end 
+        RX_ACK  :begin
+
+        end 
+        STOP    :begin
+
+        end  
+        default:n_state = IDLE; 
+    endcase
+
+
+end
+
+
+
 endmodule

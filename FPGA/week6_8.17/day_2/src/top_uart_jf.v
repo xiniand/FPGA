@@ -3,8 +3,7 @@ module top_uart_jf (
     input               clk         ,
     input               rst_n       ,
     input               rx          ,//接受的数据
-    input       [7:0]   tx_data     ,//发送的数据（保留端口，未使用——只发接收到的数据）
-    input               tx_star     ,//key0控制发送信号（保留端口，未使用——改为自动发送）
+    input               tx_star     ,//key0控制发送信号
     output              tx          ,//发送信号
     output   reg        led         ,//偶校验错误时led亮起，正确时灭的
     output      [7:0]   dig         ,
@@ -39,7 +38,7 @@ reg         tx_busy                 ;//TX正在发送标志
 reg         fifo_rd_req             ;//FIFO读请求脉冲（单周期）
 reg         fifo_rd_req_d1          ;//FIFO读请求延迟一拍（对齐FIFO输出时序）
 
-// TX是否繁忙
+// TX是否工作
 always @(posedge clk or negedge rst_n) begin
     if(!rst_n)
         tx_busy <= 0;
@@ -77,10 +76,10 @@ always @(posedge clk or negedge rst_n) begin
             cnt_time <= cnt_time + 1;
     end
 end
-assign  add_cnt_time = 1;
-assign  end_cnt_time = add_cnt_time && (cnt_time == TIME);
-assign  rden        = end_cnt_time;
-assign  wren        = !parity_error &&  rx_done;   //RAM写使能
+assign  add_cnt_time    = 1;
+assign  end_cnt_time    = add_cnt_time && (cnt_time == TIME);
+assign  rden            = end_cnt_time;
+assign  wren            = !parity_error &&  rx_done;   //RAM写使能
 always @(posedge clk or negedge rst_n) begin
     if(!rst_n)
         led <= 0;
@@ -145,7 +144,7 @@ fifo_data	fifo_data_inst (
 	.clock          ( clk               ),
 	.data           ( rx_data           ),
 	.rdreq          ( fifo_rd_req       ),//TX空闲且FIFO有数据时读取（单周期脉冲）
-	.wrreq          ( rx_done           ),//接收到数据时写入
+	.wrreq          ( wren              ),//接收到数据时写入
 	.almost_full    ( almost_full       ),
 	.empty          ( empty             ),
 	.full           ( full              ),
