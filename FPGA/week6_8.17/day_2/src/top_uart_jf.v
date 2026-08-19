@@ -101,8 +101,8 @@ tx #(
     .clk            (clk            ),
     .rst_n          (rst_n          ),
     .tick           (tick           ),
-    .tx_star        (fifo_rd_req    ),//FIFO有数据且TX空闲时自动触发
-    .tx_data        (fifo_data_rg   ),//要发送的数据
+    .tx_star        (flag_tx_star   ),//FIFO有数据且TX空闲时自动触发
+    .tx_data        (fifo_data      ),//要发送的数据
     .tx             (tx             ),//发送的数据
     .tx_done        (tx_done        ) //发送一组数据完成信号
 );
@@ -143,7 +143,7 @@ fifo_data	fifo_data_inst (
 	.aclr           ( ~rst_n            ),
 	.clock          ( clk               ),
 	.data           ( rx_data           ),
-	.rdreq          ( fifo_rd_req       ),//TX空闲且FIFO有数据时读取（单周期脉冲）
+	.rdreq          ( flag_tx_star      ),//TX空闲且FIFO有数据时读取（单周期脉冲）
 	.wrreq          ( wren              ),//接收到数据时写入
 	.almost_full    ( almost_full       ),
 	.empty          ( empty             ),
