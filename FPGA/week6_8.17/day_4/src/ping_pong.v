@@ -8,20 +8,21 @@ module ping_pong (
 );
     
 //ram1
-reg     [7:0]   data_1     ; 
-reg     [7:0]   rdaddress_1; 
-reg             rden_1     ; 
-reg     [7:0]   wraddress_1; 
-wire            wren_1     ; 
-wire    [7:0]   q_1        ;
+reg     [7:0]   data_1      ; 
+reg     [7:0]   rdaddress_1 ; 
+reg             rden_1      ; 
+reg     [7:0]   wraddress_1 ; 
+wire            wren_1      ; 
+wire    [7:0]   q_1         ;
 //ram2
-reg     [7:0]   data_2     ; 
-reg     [7:0]   rdaddress_2; 
-reg             rden_2     ; 
-reg     [7:0]   wraddress_2; 
-wire            wren_2     ; 
-wire    [7:0]   q_2        ;
-
+reg     [7:0]   data_2      ; 
+reg     [7:0]   rdaddress_2 ; 
+reg             rden_2      ; 
+reg     [7:0]   wraddress_2 ; 
+wire            wren_2      ; 
+wire    [7:0]   q_2         ;
+wire            en          ;
+assign          en = done_tx?1:(wraddress_2 == 255||wraddress_1 == 255)?0:1;
 
 localparam  W1      = 3'b001,
             W2R1    = 3'b010,  
@@ -44,13 +45,13 @@ always @(*) begin
                 n_state = W1;
         end 
         W2R1:begin
-            if(rdaddress_1 == 255 && done_tx )
+            if(rdaddress_1 == 255 && en && wraddress_2 == 255)
                 n_state = W1R2;
             else
                 n_state = W2R1;
         end 
         W1R2: begin
-            if(rdaddress_2 == 255 && done_tx )
+            if(rdaddress_2 == 255 && en && wraddress_1 == 255)
                 n_state = W2R1;
             else
                 n_state = W1R2;

@@ -30,11 +30,9 @@ wire            wren_3     ;
 wire    [7:0]   q_3        ;
 
 localparam  W1 = 6'b1,
-            W2 = 6'b10,
-            W3 = 6'b100,
-            R1 = 6'b1000,
-            R2 = 6'b10000,
-            R3 = 6'b100000;
+            R1 = 6'b10,
+            R2 = 6'b100,
+            R3 = 6'b1000,
 
 reg [2:0]   c_state ,n_state;
 
