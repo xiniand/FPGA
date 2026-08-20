@@ -9,9 +9,12 @@ wire [7:0]  data_rom,
 wire        tx_done ;
 wire        start_tx;
 wire        tick    ;
+wire [7:0]  wraddress   ;
+
 rom rom_u(
     .clk        (clk        ),
     .rst_n      (rst_n      ),
+    .wraddress  (wraddress  ),
     .data_rom   (data_rom   )
 );
 
@@ -21,6 +24,7 @@ ping_pong ping_pong_u(
     .data_rom   (data_rom   ),
     .done_tx    (tx_done    ),
     .data_tx    (data_tx    ),
+    .wraddress  (wraddress  ),  
     .start_tx   (start_tx   )
 );
 
