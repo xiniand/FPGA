@@ -1,4 +1,4 @@
-module ping_pong (
+module ping_pong_3 (
     input                   clk     ,
     input                   rst_n   ,
     input           [7:0]   data_rom,
@@ -21,11 +21,21 @@ reg             rden_2     ;
 reg     [7:0]   wraddress_2; 
 wire            wren_2     ; 
 wire    [7:0]   q_2        ;
+//ram3
+reg     [7:0]   data_3     ; 
+reg     [7:0]   rdaddress_3; 
+reg             rden_3     ; 
+reg     [7:0]   wraddress_3; 
+wire            wren_3     ; 
+wire    [7:0]   q_3        ;
 
+localparam  W1 = 6'b1,
+            W2 = 6'b10,
+            W3 = 6'b100,
+            R1 = 6'b1000,
+            R2 = 6'b10000,
+            R3 = 6'b100000;
 
-localparam  W1      = 3'b001,
-            W2R1    = 3'b010,  
-            W1R2    = 3'b100;
 reg [2:0]   c_state ,n_state;
 
 always @(posedge clk or negedge rst_n) begin
@@ -38,8 +48,8 @@ end
 always @(*) begin
     case (c_state)
         W1  :begin
-            if(wraddress_1 == 255)
-                n_state = W2R1;
+            if(wraddress_1 == 255 && wraddress_2 == 0)
+                n_state = W2;
             else
                 n_state = W1;
         end 
@@ -222,5 +232,16 @@ ram_data	ram_data_inst_2 (
 	.wraddress  ( wraddress_2   ),
 	.wren       ( wren_2        ),
 	.q          ( q_2           )
+);
+
+ram_data	ram_data_inst_3 (
+	.aclr       ( ~rst_n        ),
+	.clock      ( clk           ),
+	.data       ( data_3        ),
+	.rdaddress  ( rdaddress_3   ),
+	.rden       ( rden_3        ),
+	.wraddress  ( wraddress_3   ),
+	.wren       ( wren_3        ),
+	.q          ( q_3           )
 );
 endmodule
