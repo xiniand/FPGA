@@ -193,7 +193,7 @@ end
 always @(posedge clk or negedge rst_n) begin
     if(!rst_n)
         start_tx <= 0;
-    else if(rden_1_rise || rden_2_rise)
+    else if(rden_1_d || rden_2_d)
         start_tx <= 1;
     else
         start_tx <= 0;

@@ -18,7 +18,6 @@ rom rom_u(
 ping_pong ping_pong_u(
     .clk        (clk        ),
     .rst_n      (rst_n      ),
-    .tick       (tick       ),
     .data_rom   (data_rom   ),
     .done_tx    (tx_done    ),
     .data_tx    (data_tx    ),
