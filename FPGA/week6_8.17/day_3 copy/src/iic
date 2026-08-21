@@ -35,8 +35,8 @@ wire        add_cnt_scl     ,
             end_cnt_scl     ;
 wire        scl_pos         ,//scl上升沿
             scl_neg         ;//scl下降沿
-reg         sda_oe          ;// 输出使能 (1: 主机驱动SDA, 0: 释放SDA)
-reg         sda_out         ;// 输出电平
+reg         sda_oe          ;//输出使能 (1: 主机驱动SDA, 0: 释放SDA)
+reg         sda_out         ;//输出电平
 reg [3:0]   cnt_bit         ;
 assign sda = sda_oe ? sda_out : 1'bz;
 //scl时钟 半个周期计数器
