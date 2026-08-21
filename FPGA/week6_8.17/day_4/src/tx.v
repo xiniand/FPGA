@@ -5,10 +5,11 @@ module tx (
     input           tick    ,
     input           tx_star ,//开始发送的信号
     input  [7:0]    tx_data ,//要发送的数据 
+    output          brg_en  ,
     output  reg     tx      ,//发送的数据
     output  reg     tx_done  //发送一组数据完成信号
 );
-parameter   MODE    = 2;    //0无校验，1奇校验，2偶校验
+parameter   MODE    = 0;    //0无校验，1奇校验，2偶校验
 localparam  IDLE    = 3'b000,//空闲态
             START   = 3'b001,//准备数据
             SEND    = 3'b010,//发送数据
@@ -48,6 +49,9 @@ always @(posedge clk or negedge rst_n) begin
     else
         c_state <= n_state;
 end
+
+assign  brg_en = (c_state == IDLE || !rst_n)?0:1;
+
 //状态转移
 always @(*) begin
     n_state     = c_state     ;

@@ -22,6 +22,8 @@ always @(posedge clk or negedge rst_n) begin
         else
             cnt_tick <= cnt_tick + 1;
     end
+    else
+        cnt_tick <= 0;
 end
 assign add_cnt_tick = brg_en;
 assign end_cnt_tick = add_cnt_tick&&(cnt_tick == COUNT_MAX);

@@ -4,10 +4,8 @@ module ping_pong (
     input           [7:0]   data_rom    ,
     input                   done_tx     ,
     output  reg     [7:0]   data_tx     ,
-    output  reg             start_tx    ,
-    output          [7:0]   wraddress   
-/*     output  reg     [7:0]   wraddress_1 ;
-    output  reg     [7:0]   wraddress_2 ;  */
+    output  reg             start_tx    
+
 );
 //ram1
 reg     [7:0]   data_1      ; 
@@ -188,7 +186,6 @@ always @(posedge clk or negedge rst_n) begin
         start_tx <= 0;
 end
 
-assign wraddress = (c_state == W1 || c_state == W1R2) ? wraddress_1 :(c_state == W2R1)? wraddress_2 : 8'd0;
 always @(posedge clk or negedge rst_n) begin
     if(!rst_n) begin
         rden_1_d <= 0;

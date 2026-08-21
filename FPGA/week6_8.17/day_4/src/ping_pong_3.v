@@ -43,139 +43,9 @@ always @(posedge clk or negedge rst_n) begin
         c_state <= n_state;
 end
 
-always @(*) begin
-    case (c_state)
-        W1  :begin
-            if(wraddress_1 == 255 && wraddress_2 == 0)
-                n_state = W2;
-            else
-                n_state = W1;
-        end 
-        W2R1:begin
-            if(rdaddress_1 == 255 && done_tx )
-                n_state = W1R2;
-            else
-                n_state = W2R1;
-        end 
-        W1R2: begin
-            if(rdaddress_2 == 255 && done_tx )
-                n_state = W2R1;
-            else
-                n_state = W1R2;
-        end 
-        default:n_state = W1 ;
-    endcase
-end
-//ram1
-always @(posedge clk or negedge rst_n) begin
-    if(!rst_n)begin
-        data_1     <= 0;
-        rdaddress_1<= 0;
-        rden_1     <= 0;
-        wraddress_1<= 0;
-    end
-    else begin
-        case (c_state)
-            W1  :begin
-                data_1  <= data_rom;
-                wraddress_1   <= wraddress_1 + 1;
-                rdaddress_1   <=0;
-                if(wraddress_1 == 255)
-                    rden_1  <= 1;
-                else
-                    rden_1  <= 0;
-            end 
-            W2R1:begin
-                wraddress_1   <= 0;
-                if(done_tx) begin
-                    if(rdaddress_1 == 255) begin
-                        rden_1      <= 0;
-                        rdaddress_1 <= 0;
-                    end
-                    else begin
-                        rden_1      <= 1;
-                        rdaddress_1 <= rdaddress_1 + 1;
-                    end
-                end
-                else begin
-                    rden_1      <= 0;
-                    rdaddress_1 <= rdaddress_1;
-                end
-            end
-            W1R2:begin
-                data_1     <= data_rom;
-                rdaddress_1<= 0;
-                wraddress_1<= wraddress_1 + 1;
-                if(rdaddress_2 == 255 && done_tx)
-                    rden_1 <= 1;
-                else
-                    rden_1 <= 0;
-            end
-            default: begin
-                data_1     <= 0;
-                rdaddress_1<= 0;
-                rden_1     <= 0;
-                wraddress_1<= 0;
-            end 
-        endcase
-    end 
-end
 
-
-//ram2
-always @(posedge clk or negedge rst_n) begin
-    if(!rst_n)begin
-        data_2     <= 0;
-        rdaddress_2<= 0;
-        rden_2     <= 0;
-        wraddress_2<= 0;
-    end 
-    else begin
-        case (c_state)
-            W1  :begin
-                data_2          <= 0;
-                wraddress_2     <= 0;
-                rdaddress_2     <= 0;
-                rden_2          <= 0;
-            end 
-            W1R2:begin
-                wraddress_2   <= 0;
-                if(done_tx) begin
-                    if(rdaddress_2 == 255) begin
-                        rden_2      <= 0;
-                        rdaddress_2 <= 0;
-                    end
-                    else begin
-                        rden_2      <= 1;
-                        rdaddress_2 <= rdaddress_2 + 1;
-                    end
-                end
-                else begin
-                    rden_2      <= 0;
-                    rdaddress_2 <= rdaddress_2;
-                end
-            end
-            W2R1:begin
-                data_2     <= data_rom;
-                rdaddress_2<= 0;
-                wraddress_2<= wraddress_2 + 1;
-                if(rdaddress_1 == 255 && done_tx)
-                    rden_2 <= 1;
-                else
-                    rden_2 <= 0;
-            end
-            default: begin
-                data_2     <= 0;
-                rdaddress_2<= 0;
-                rden_2     <= 0;
-                wraddress_2<= 0;
-            end 
-        endcase
-    end 
-end
 
 reg rden_1_d, rden_2_d;
-wire rden_1_rise, rden_2_rise;
 always @(posedge clk or negedge rst_n) begin
     if(!rst_n) begin
         rden_1_d <= 0;
@@ -186,8 +56,6 @@ always @(posedge clk or negedge rst_n) begin
         rden_2_d <= rden_2;
     end
 end
-assign rden_1_rise = rden_1 && !rden_1_d;
-assign rden_2_rise = rden_2 && !rden_2_d;
 
 always @(posedge clk or negedge rst_n) begin
     if(!rst_n)
@@ -198,6 +66,8 @@ always @(posedge clk or negedge rst_n) begin
         data_tx <= q_2;
 end
 
+
+
 always @(posedge clk or negedge rst_n) begin
     if(!rst_n)
         start_tx <= 0;
@@ -206,7 +76,6 @@ always @(posedge clk or negedge rst_n) begin
     else
         start_tx <= 0;
 end
-
 assign wren_1 = (c_state == W1)   || (c_state == W1R2);
 assign wren_2 = (c_state == W2R1);
 
