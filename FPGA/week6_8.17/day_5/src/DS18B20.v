@@ -39,22 +39,29 @@ localparam  S_IDLE      =   5'b0        ,//初始状态；
             S_SAMP      =   5'b100      ,//主机接收1bit数据；
             S_RELS      =   5'b1000     ,//主机释放总线；
             S_DONE      =   5'b10000    ;//传输完成。
-reg     [2:0]   cnt_bit                 ;
-reg             s_busy                  ;//从机是否工作
+//命令  
+localparam  SKIP        =   8'hCC,//跳过rom
+            TEMP_Z      =   8'h44,//温度转化
+            REG_RD      =   8'hBE;//寄存器读取
+   
+reg     [3:0]   cnt_bit                 ;
 reg     [25:0]  cnt_time                ;
 reg     [25:0]  s_cnt_time              ;
 reg     [7:0]   m_c_state ,m_n_state    ;
 reg     [4:0]   s_c_state ,s_n_state    ;
 reg     [15:0]  temp_rg                 ;//原始温度寄存
-reg     flag ,  //跳过ROM命令完成标志完成为0
-        flag_tx;//温度转化命令发送完成标志
+reg     flag                            ,  //跳过ROM命令完成标志完成为0
+        flag_tx                         ;//温度转化命令发送完成标志
 //主从状态机握手信号
-reg     s_start     ,
-        s_busy      ;
-reg     [1:0]   s_cmd;//00复位，01写 10读
-reg     s_tx_bit    ,
-        s_rx_bit    ;
-
+reg     s_start                         ,
+        s_busy                          ;//从机是否工作
+reg     [1:0]   s_cmd                   ;//00复位，01写 10读
+reg             s_tx_bit                ,
+                s_rx_bit                ;    
+reg     [25:0]  cnt_wait                ;       
+reg     [15:0]  temp_shift              ;
+reg     [7:0]   cmd_buf                 ;   
+reg             data_T                  ;    
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //主状态机
@@ -75,30 +82,30 @@ always @(*) begin
             else
                 m_n_state = m_c_state;
         end
-        M_REST:begin
-            if(dq == 0 && cnt_time == TIME_REST)
+        M_REST:begin//发复位脉冲；		s_cmd == 00
+            if(cnt_time == TIME_REST)
                 m_n_state = M_RELS;
             else
                 m_n_state = m_c_state;
         end
-        M_RELS:begin
+        M_RELS:begin//释放总线
             if(cnt_time == TIME_RELS0)
                 m_n_state = M_RACK;
             else
                 m_n_state = m_c_state;
         end
-        M_RACK:begin
-            if(cnt_time == TIME_REST)begin
+        M_RACK:begin//主机接收存在脉冲；
+            if(cnt_time == TIME_RACK)begin
                 if(dq == 0)
                     m_n_state = M_ROMS;
                 else
                     m_n_state = M_IDLE;
             end
             else
-                m_n_state = m_c_state;
+                m_n_state = M_IDLE;
         end
-        M_ROMS:begin
-            if (!s_busy && cnt_bit == 3'd7) begin
+        M_ROMS:begin//主机发跳过ROM命令；s_cmd == 01
+            if (!s_busy && cnt_bit == 4'd7) begin
                 if (flag == 1'b0) 
                     m_n_state = M_CONT;
                 else 
@@ -107,26 +114,26 @@ always @(*) begin
             else
                 m_n_state = m_c_state;
         end
-        M_CONT:begin
-            if (!s_busy && cnt_bit == 3'd7) 
+        M_CONT:begin//主机发送温度转化命令
+            if (!s_busy && cnt_bit == 4'd7) 
                 m_n_state = M_WAIT;
             else
                 m_n_state = m_c_state;
         end
-        M_WAIT:begin
+        M_WAIT:begin//等待转化
             if(cnt_time == TIME_WAIT)
                 m_n_state = M_REST;
             else
                 m_n_state = m_c_state;
         end
-        M_RCMD:begin
-            if(!s_busy && cnt_bit == 3'd7)
+        M_RCMD:begin//主机发送温度读取命令
+            if(!s_busy && cnt_bit == 4'd7)
                 m_n_state = M_RTMP;
             else
                 m_n_state = m_c_state;
         end
-        M_RTMP:begin
-            if(!s_busy && cnt_bit == 3'd15)
+        M_RTMP:begin//主机读取温度
+            if(!s_busy && cnt_bit == 4'd15)
                 m_n_state = M_IDLE;
             else
                 m_n_state = m_c_state;
@@ -137,47 +144,148 @@ end
 //主状态机输出
 always @(posedge clk or negedge rst_n) begin
     if(!rst_n)
-        cnt_time    <= 0;
-        cnt_bit     <= 0;
-        cnt_wait    <= 26'd0;
-        s_start     <= 0;
-        s_cmd       <= 0;
-        s_tx_bit    <= 0;
-        temp_shift  <= 16'd0;
-        flag        <= 1'b0;
-        cmd_buf     <= 8'h00;
-        data_T      <= 1'b0;
+        cnt_time    <= 26'b0;//延时计数器
+        cnt_bit     <= 4'b0 ;//发送bit位数计数器
+        cnt_wait    <= 26'b0;//等待750ms计数器
+        s_start     <= 0    ;//从机开始信号
+        s_cmd       <= 0    ;//00 复位 01 写 10 读
+        s_tx_bit    <= 0    ;//要发送的位
+        temp_shift  <= 0    ;//16位温度位
+        flag        <= 0    ;//第一次寄存器操作为0，第二次寄存器操作为1，因为就两次所以反转就行
+        cmd_buf     <= 0    ;//命令字节
+        data_T      <= 0    ;//完成输出脉冲
     else begin
         case (m_c_state)
             M_IDLE:begin
-                if(cnt_time == TIME_IDLE)
-                    cnt_time == 0;
+                cnt_time  <= 0;
+                cnt_bit   <= 0;
+                cnt_wait  <= 0;
+                s_start   <= 0;
+                s_cmd     <= 2'b00;
+                s_tx_bit  <= 0;
+                temp_shift<= 0;
+                flag      <= 0;
+                cmd_buf   <= 0;
+                data_T    <= 0;
+            end
+            M_REST:begin//发复位脉冲；		s_cmd == 00
+                if(cnt_time == TIME_REST)
+                    cnt_time  <= 0;
                 else
-                    cnt_time == cnt_time + 1;
+                    cnt_time <= cnt_time + 1;
+                cnt_bit   <= 0;
+                cnt_wait  <= 0;
+                s_start   <= 1;
+                s_cmd     <= 2'b00;
+                s_tx_bit  <= 0;
+                temp_shift<= 0;
+                data_T    <= 0;
             end
-            M_REST:begin
-
+            M_RELS:begin//释放总线
+                if(cnt_time == TIME_RELS0)
+                    cnt_time  <= 0;
+                else
+                    cnt_time <= cnt_time + 1;
+                cnt_bit   <= 0;
+                cnt_wait  <= 0;
+                s_start   <= 0;
+                s_cmd     <= 2'b00;
+                s_tx_bit  <= 0;
+                temp_shift<= 0;
+                cmd_buf   <= 0;
+                data_T    <= 0;
             end
-            M_RELS:begin
-
+            M_RACK:begin//主机接收存在脉冲；
+                if(cnt_time == TIME_RACK)
+                    cnt_time  <= 0;
+                else
+                    cnt_time <= cnt_time + 1;
+                cnt_bit   <= 0;
+                cnt_wait  <= 0;
+                s_start   <= 0;
+                s_cmd     <= 2'b00;
+                s_tx_bit  <= 0;
+                temp_shift<= 0;
+                cmd_buf   <= 0;
+                data_T    <= 0;
             end
-            M_RACK:begin
+            M_ROMS:begin//主机发跳过ROM命令；s_cmd == 01
+                cmd_buf   <= SKIP;
+                cnt_time  <= 0;
+                if(!s_busy && cnt_bit == 4'd7)
+                    cnt_bit   <= 0;
+                else if(!s_busy)begin
+                    cnt_bit <= cnt_bit + 1;
+                end
 
+                if(!s_busy)begin
+                    s_start   <= 1;
+                    s_cmd     <= 2'b01;
+                    s_tx_bit  <= cmd_buf[cnt_bit];
+                end 
+                else begin
+                    s_start <= 0;
+                end 
+                temp_shift<= 0;
+                data_T    <= 0;
+            end 
+            M_CONT:begin//主机发送温度转化命令
+                cmd_buf   <= TEMP_Z;
+                cnt_time  <= 0;
+                cnt_wait  <= 0;
+                if(!s_busy && cnt_bit == 4'd7)
+                    cnt_bit <= 0;
+                else if(!s_busy)
+                    cnt_bit <= cnt_bit + 1;
+                if(!s_busy)
+                    s_start   <= 1;
+                    s_cmd     <= 2'b01;
+                    s_tx_bit  <= cmd_buf[cnt_bit];
+                else
+                    s_start <=0;
+                temp_shift<= 0;
+                data_T    <= 0;
             end
-            M_ROMS:begin
-
+            M_WAIT:begin//等待转化
+                cnt_wait <= cnt_wait + 1;
+                if(m_n_state == M_REST)
+                    flag      <= 1;
             end
-            M_CONT:begin
-
+            M_RCMD:begin//主机发送温度读取命令
+                cmd_buf   <= REG_RD;
+                cnt_time  <= 0;
+                cnt_wait  <= 0;
+                if(!s_busy && cnt_bit == 4'd7)
+                    cnt_bit   <= 0;
+                else if(!s_busy)
+                    cnt_bit <= cnt_bit + 1;
+                if(!s_busy)
+                    s_start   <= 1;
+                    s_cmd     <= 2'b01;//写操作
+                    s_tx_bit  <= cmd_buf[cnt_bit];
+                else
+                    s_start <=0;
             end
-            M_WAIT:begin
+            M_RTMP:begin//主机读取温度
+                if(!s_busy)begin
+                    s_start   <= 1;
+                    s_cmd     <= 2'b10;//读操作
+                end 
+                else
+                    s_start   <= 0;
 
-            end
-            M_RCMD:begin
-
-            end
-            M_RTMP:begin
-
+                if(!s_busy && cnt_bit == 4'd15)begin
+                    cnt_bit   <= 0;
+                    temp_shift <= {s_rx_bit,temp_shift[15:1]};
+                    data_T     <= 1'b1;  
+                end 
+                else if(!s_busy && s_start == 0)begin
+                    cnt_bit <= cnt_bit + 1;
+                    temp_shift <= {s_rx_bit,temp_shift[15:1]};
+                    data_T     <= 1'b0;
+                end 
+                else    
+                    data_T     <= 1'b0;
             end
             default: m_n_state = M_IDLE;
         endcase
