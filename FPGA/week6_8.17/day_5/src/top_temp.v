@@ -2,7 +2,7 @@ module top_temp (
     input           clk     ,
     input           rst_n   ,
     input           key     ,
-    inout           qd      ,
+    inout           dq      ,
     output  [7:0]   dig     ,
     output  [5:0]   sel
 
@@ -53,7 +53,7 @@ temp temp_u(
 bin_to_bcd bin_to_bcd_u(
     .clk            (clk        ),
     .rst_n          (rst_n      ),
-	 .key            (flag_temp  ),
+	 .key           (flag_temp  ),
     .data_zs_in     (temp_smg_zs),//输入待转换的数据
     .data_xs_in     (temp_smg_xs),//输入待转换的数据
     .data_bcd_zs    (data_bcd_zs),//输出转换后的BCD码数据

@@ -64,4 +64,41 @@ set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_location_assignment PIN_E1 -to clk
+set_global_assignment -name TCL_SCRIPT_FILE ../../../week4_8.3/day_5/prj/day_5.tcl
+set_location_assignment PIN_A4 -to sel[5]
+set_location_assignment PIN_B4 -to sel[4]
+set_location_assignment PIN_A3 -to sel[3]
+set_location_assignment PIN_B3 -to sel[2]
+set_location_assignment PIN_A2 -to sel[1]
+set_location_assignment PIN_B1 -to sel[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to clk
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to sel[5]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to sel[4]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to sel[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to sel[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to sel[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to sel[0]
+set_location_assignment PIN_A5 -to dig[7]
+set_location_assignment PIN_B8 -to dig[6]
+set_location_assignment PIN_A7 -to dig[5]
+set_location_assignment PIN_B6 -to dig[4]
+set_location_assignment PIN_B5 -to dig[3]
+set_location_assignment PIN_A6 -to dig[2]
+set_location_assignment PIN_A8 -to dig[1]
+set_location_assignment PIN_B7 -to dig[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to dig[7]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to dig[6]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to dig[5]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to dig[4]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to dig[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to dig[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to dig[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to dig[0]
+set_location_assignment PIN_N11 -to rst_n
+set_location_assignment PIN_E15 -to key
+set_location_assignment PIN_E6 -to dq
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to dq
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to key
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to rst_n
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
