@@ -2,7 +2,8 @@ module DS18B20 (
     input   clk     ,
     input   rst_n   ,
     inout   dq      ,//dq总线
-    output reg data_T  //每完成一次读取输出一次脉冲
+    output  reg     [15:0]  temp_shift,
+    output  reg data_T  //每完成一次读取输出一次脉冲
 );
 //三态门
 reg       dq_en   ;//时钟总线的开关使能
@@ -59,7 +60,6 @@ reg     [1:0]   s_cmd                   ;//00复位，01写 10读
 reg             s_tx_bit                ,
                 s_rx_bit                ;    
 reg     [25:0]  cnt_wait                ;       
-reg     [15:0]  temp_shift              ;
 reg     [7:0]   cmd_buf                 ;   
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //主状态机
@@ -100,7 +100,7 @@ always @(*) begin
                     m_n_state = M_IDLE;
             end
             else
-                m_n_state = M_IDLE;
+                m_n_state = m_c_state;
         end
         M_ROMS:begin//主机发跳过ROM命令；s_cmd == 01
             if (!s_busy && cnt_bit == 4'd7) begin
@@ -119,7 +119,7 @@ always @(*) begin
                 m_n_state = m_c_state;
         end
         M_WAIT:begin//等待转化
-            if(cnt_time == TIME_WAIT)
+            if(cnt_wait == TIME_WAIT)
                 m_n_state = M_REST;
             else
                 m_n_state = m_c_state;
@@ -156,7 +156,10 @@ always @(posedge clk or negedge rst_n) begin
     else begin
         case (m_c_state)
             M_IDLE:begin
-                cnt_time  <= 0;
+                if(cnt_time == TIME_IDLE)
+                    cnt_time  <= 0;
+                else
+                    cnt_time <= cnt_time + 1;
                 cnt_bit   <= 0;
                 cnt_wait  <= 0;
                 s_start   <= 0;
@@ -248,6 +251,7 @@ always @(posedge clk or negedge rst_n) begin
             end
             M_WAIT:begin//等待转化
                 cnt_wait <= cnt_wait + 1;
+                s_start  <= 0;              // 等待期间释放总线,避免一直发复位
                 if(m_n_state == M_REST)
                     flag      <= 1;
             end
@@ -388,7 +392,10 @@ always @(posedge clk or negedge rst_n) begin
                 s_busy      <= 1;
                 dq_en       <= 1;
                 dq_out      <= 0;
-                s_cnt_time  <= s_cnt_time + 1;
+                if(s_cmd == 2'b00 && s_cnt_time == TIME_REST)
+                    s_cnt_time  <= 0;
+                else
+                    s_cnt_time  <= s_cnt_time + 1;
             end
             S_SEND:begin
                 s_busy      <= 1;
@@ -400,6 +407,8 @@ always @(posedge clk or negedge rst_n) begin
                 s_busy      <= 1;
                 dq_en       <= 0;
                 s_cnt_time  <= s_cnt_time + 1;
+                // 采样点提前到芯片数据窗口内(约4us即s_cnt_time==200)。
+                // 原为499(10us)太晚, 采到芯片已释放的上拉高电平, 导致读到全1。
                 if(s_cnt_time == 499)
                     s_rx_bit    <= dq_in;
             end
