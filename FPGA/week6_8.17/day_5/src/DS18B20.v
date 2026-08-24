@@ -2,7 +2,7 @@ module DS18B20 (
     input   clk     ,
     input   rst_n   ,
     inout   dq      ,//dq总线
-    output  data_T  //每完成一次读取输出一次脉冲
+    output reg data_T  //每完成一次读取输出一次脉冲
 );
 //三态门
 reg       dq_en   ;//时钟总线的开关使能
@@ -13,14 +13,14 @@ assign    dq   = dq_en?dq_out:1'bz;
 assign    dq_in= dq                ;
 
 //时间参数
-parameter   TIME_IDLE   =   49          ;//1us
-            TIME_REST   =   24999       ;//500us    >=480us
-            TIME_RELS0  =   999         ;//20us     15us--60us
-            TIME_RACK   =   4999        ;//100us    60us--240us
-            TIME_WAIT   =   37_499_999  ;//750ms    转换时间最大750ms
-            TIME_LOW    =   99          ;//2us      >= 1us
-            TIME_SEND   =   2999        ;//60us     写时隙，至少60us
-            TIME_SEND   =   2999        ;//60us     读时隙，至少60us
+parameter   TIME_IDLE   =   49          ,//1us
+            TIME_REST   =   24999       ,//500us    >=480us
+            TIME_RELS0  =   999         ,//20us     15us--60us
+            TIME_RACK   =   4999        ,//100us    60us--240us
+            TIME_WAIT   =   37_499_999  ,//750ms    转换时间最大750ms
+            TIME_LOW    =   99          ,//2us      >= 1us
+            TIME_SEND   =   2999        ,//60us     写时隙，至少60us
+            TIME_SAWP   =   2999        ,//60us     读时隙，至少60us
             TIME_RELS1  =   149         ;//3us      >=1us
 //主状态机
 localparam  M_IDLE      =   8'b0        ,//空闲状态，等待开始通信；
@@ -61,8 +61,6 @@ reg             s_tx_bit                ,
 reg     [25:0]  cnt_wait                ;       
 reg     [15:0]  temp_shift              ;
 reg     [7:0]   cmd_buf                 ;   
-reg             data_T                  ;    
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //主状态机
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -143,7 +141,7 @@ always @(*) begin
 end
 //主状态机输出
 always @(posedge clk or negedge rst_n) begin
-    if(!rst_n)
+    if(!rst_n)begin
         cnt_time    <= 26'b0;//延时计数器
         cnt_bit     <= 4'b0 ;//发送bit位数计数器
         cnt_wait    <= 26'b0;//等待750ms计数器
@@ -154,6 +152,7 @@ always @(posedge clk or negedge rst_n) begin
         flag        <= 0    ;//第一次寄存器操作为0，第二次寄存器操作为1，因为就两次所以反转就行
         cmd_buf     <= 0    ;//命令字节
         data_T      <= 0    ;//完成输出脉冲
+    end 
     else begin
         case (m_c_state)
             M_IDLE:begin
@@ -237,10 +236,11 @@ always @(posedge clk or negedge rst_n) begin
                     cnt_bit <= 0;
                 else if(!s_busy)
                     cnt_bit <= cnt_bit + 1;
-                if(!s_busy)
+                if(!s_busy) begin
                     s_start   <= 1;
                     s_cmd     <= 2'b01;
                     s_tx_bit  <= cmd_buf[cnt_bit];
+					 end
                 else
                     s_start <=0;
                 temp_shift<= 0;
@@ -259,10 +259,11 @@ always @(posedge clk or negedge rst_n) begin
                     cnt_bit   <= 0;
                 else if(!s_busy)
                     cnt_bit <= cnt_bit + 1;
-                if(!s_busy)
+                if(!s_busy) begin
                     s_start   <= 1;
                     s_cmd     <= 2'b01;//写操作
                     s_tx_bit  <= cmd_buf[cnt_bit];
+					 end
                 else
                     s_start <=0;
             end
@@ -331,8 +332,6 @@ always @(*) begin
                         else
                             s_n_state = s_c_state;
                     end
-                    else
-                        s_n_state = s_c_state;
                 end 
                 2'b10:begin//读操作
                     if(s_cnt_time == TIME_LOW)
@@ -340,7 +339,7 @@ always @(*) begin
                     else
                         s_n_state = s_c_state;
                 end  
-                default: s_n_state = IDLE;
+                default: s_n_state = S_IDLE;
             endcase
         end
         S_SEND:begin
@@ -370,58 +369,60 @@ end
 
 //从状态机输出
 always @(posedge clk or negedge rst_n) begin
-    if(!rst_n)
+    if(!rst_n)begin
         s_busy      <= 0;
         dq_en       <= 0;
         dq_out      <= 1;
         s_rx_bit    <= 0;
         s_cnt_time  <= 0;
-    else
+    end 
+    else begin
         case (s_c_state)
-        S_IDLE:begin
-            s_busy      <= 0;
-            dq_en       <= 0;
-            dq_out      <= 1;
-            s_cnt_time  <= 0;
-        end
-        S_LOW :begin
-            s_busy      <= 1;
-            dq_en       <= 1;
-            dq_out      <= 0;
-            s_cnt_time  <= s_cnt_time + 1;
-        end
-        S_SEND:begin
-            s_busy      <= 1;
-            dq_en       <= 0;
-            dq_out      <= 1;
-            s_cnt_time  <= s_cnt_time + 1;
-        end
-        S_SAMP:begin
-            s_busy      <= 1;
-            dq_en       <= 0;
-            s_cnt_time  <= s_cnt_time + 1;
-            if(s_cnt_time == 499)
-                s_rx_bit    <= dq_in;
-        end
-        S_RELS:begin
-            s_busy      <= 1;
-            dq_en       <= 0;
-            dq_out      <= 1;
-            s_cnt_time  <= s_cnt_time + 1;
-        end
-        S_DONE:begin
-            s_busy      <= 0;
-            dq_en       <= 0;
-            dq_out      <= 1;
-            s_cnt_time  <= 0;
-        end 
-        default:begin
-            s_busy      <= 0;
-            dq_en       <= 0;
-            dq_out      <= 1;
-            s_rx_bit    <= 0;
-            s_cnt_time  <= 0;
-        end
-    endcase
+            S_IDLE:begin
+                s_busy      <= 0;
+                dq_en       <= 0;
+                dq_out      <= 1;
+                s_cnt_time  <= 0;
+            end
+            S_LOW :begin
+                s_busy      <= 1;
+                dq_en       <= 1;
+                dq_out      <= 0;
+                s_cnt_time  <= s_cnt_time + 1;
+            end
+            S_SEND:begin
+                s_busy      <= 1;
+                dq_en       <= 0;
+                dq_out      <= 1;
+                s_cnt_time  <= s_cnt_time + 1;
+            end
+            S_SAMP:begin
+                s_busy      <= 1;
+                dq_en       <= 0;
+                s_cnt_time  <= s_cnt_time + 1;
+                if(s_cnt_time == 499)
+                    s_rx_bit    <= dq_in;
+            end
+            S_RELS:begin
+                s_busy      <= 1;
+                dq_en       <= 0;
+                dq_out      <= 1;
+                s_cnt_time  <= s_cnt_time + 1;
+            end
+            S_DONE:begin
+                s_busy      <= 0;
+                dq_en       <= 0;
+                dq_out      <= 1;
+                s_cnt_time  <= 0;
+            end 
+            default:begin
+                s_busy      <= 0;
+                dq_en       <= 0;
+                dq_out      <= 1;
+                s_rx_bit    <= 0;
+                s_cnt_time  <= 0;
+            end
+        endcase
+    end
 end
 endmodule
