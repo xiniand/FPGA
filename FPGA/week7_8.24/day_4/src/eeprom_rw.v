@@ -1,69 +1,33 @@
 module eeprom_rw (
-    input               clk     ,
-    input               rst_n   ,
-    input               din_vld ,// UART 收到一字节(rx_done)
-    input       [7:0]   din     ,// UART 接收数据(rx_data)
-    input               rd_en   ,// 按键触发读 EEPROM
-    input               done    ,// IIC 完成信号
-    input       [7:0]   rd_data ,// IIC 读回数据
-    input               tx_done ,// UART 发送完成
-    output  reg         req     ,// IIC 启动
-    output  reg         rw_ctrl ,// 0:写, 1:读
-    output      [7:0]   waddr   ,// 字地址(EEPROM 地址,固定 ADDR)
-    output  reg [7:0]   sendnum ,// IIC 发送字节数
-    output  reg [7:0]   recvnum ,// IIC 接收字节数
-    output  reg [7:0]   wr_data ,// 写入 EEPROM 的数据
-    output  reg [7:0]   dout    ,// 读出送 UART 的数据
-    output  reg         dout_vld // UART TX 启动
+    input               clk         ,
+    input               rst_n       ,
+    input               rx_done     ,// UART 收到一字节(rx_done)
+    input    [7:0]      rx_data     ,// UART 接收数据(rx_data)
+    input               iic_done    ,
+    input               iic_done_w  ,
+    output              iic_start   ,// IIC 启动
+    output              rw_ctrl     ,// 0:写, 1:读
+    output   [7:0]      sendnum     ,// IIC 发送字节数
+    output   [7:0]      recvnum     ,// IIC 接收字节数
+    output   [7:0]      data_i_iic   // 写入 EEPROM 的数据
 );
 
-    parameter ADDR = 8'h00;     // EEPROM 读写地址(固定 0x00,可改)
-    assign  waddr = ADDR;
+    localparam  IDLE        = 6'd0      ,//识别包头
+                WORR        = 6'd1      ,//done_rx
+                SENDNUM     = 6'd10     ,//done_rx
+                RECVNUM     = 6'd100    ,//done_rx识别包尾
+                ADDR        = 6'd1000   ,//done_rx识别包尾
+                DATA        = 6'd10000  ,//done_rx识别包尾
+                STOP        = 6'd100000 ;//IDLE
 
-    localparam  IDLE        = 6'd0      ,//空闲态
-                WR_START    = 6'd1      ,//写开始信号
-                WR_WAIT     = 6'd10     ,//写等待
-                RD_START    = 6'd100    ,//读开始信号
-                RD_WAIT     = 6'd1000   ,//读等待
-                TX_START    = 6'd10000  ,//发送开始信号
-                TX_WAIT     = 6'd100000 ;//发送等待
+    reg [5:0]   c_state, n_state    ;//现态，次态
+    reg         rw_ctrl_rg          ;//锁存按键读信号
+    reg [7:0]   sendnum_rg          ;//锁存rx信号
+    reg [7:0]   recvnum_rg          ;//锁存iic读回信号
+    reg [7:0]   addr_rg             ;    
+    reg [7:0]   data_i_iic_rg       ;//接收一字节信号打一拍
+    reg [7:0]   data_temp           ;
 
-    reg [5:0]   c_state, n_state;//现态，次态
-    reg [7:0]   din_rg          ;//锁存rx信号
-    reg [7:0]   rd_data_rg      ;//锁存iic读回信号
-    reg         din_vld_rg      ;//接收一字节信号打一拍
-    reg         rd_pending      ;//锁存按键读信号
-
-    always @(posedge clk or negedge rst_n) begin
-        if(!rst_n)
-            din_rg <= 0;
-        else if(din_vld)
-            din_rg <= din;
-    end
-
-    always @(posedge clk or negedge rst_n) begin
-        if(!rst_n)
-            din_vld_rg <= 0;
-        else 
-            din_vld_rg <= din_vld;
-    end
-
-
-//防止和写信号竞争    
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n)
-            rd_pending <= 1'b0;
-        else if (rd_en)
-            rd_pending <= 1'b1;
-        else if (c_state == RD_START)
-            rd_pending <= 1'b0;
-    end
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n)
-            rd_data_rg <= 8'd0;
-        else if (c_state == RD_WAIT && done)
-            rd_data_rg <= rd_data;
-    end
 //状态切换
     always @(posedge clk or negedge rst_n) begin
         if(!rst_n)
@@ -74,117 +38,129 @@ module eeprom_rw (
 //状态转移
     always @(*) begin
         case (c_state)
-            IDLE    :begin
-                if(din_vld_rg)
-                    n_state = WR_START;
-                else if(rd_pending)
-                    n_state = RD_START;
+            IDLE   :begin
+                if(rx_done && rx_data == 8'hfe)
+                    n_state = WORR;
+                else 
+                    n_state = c_state ;
+            end
+            WORR   :begin
+                if(rx_done)
+                    n_state = SENDNUM;
                 else
-                    n_state = c_state;
+                    n_state = c_state ;
             end
-            WR_START:begin
-                n_state = WR_WAIT;
+            SENDNUM:begin
+                if(rx_done)
+                    n_state = RECVNUM;
+                else
+                    n_state = c_state ;
             end
-            WR_WAIT :begin
-                if(done)
+            RECVNUM:begin
+                if(rx_done)
+                    n_state = ADDR;
+                else
+                    n_state = c_state ;
+            end
+            ADDR   :begin
+                if(rx_done && rx_data == 8'hee)
+                    n_state = STOP;
+                else if(rx_done && rx_data != 8'hee)
+                    n_state = DATA;
+                else
+                    n_state = c_state ;
+            end
+            DATA   :begin
+                if(rx_done && rx_data == 8'hee)
+                    n_state = STOP;
+                else if(rx_done && rx_data != 8'hee)
+                    n_state = STOP;
+                else
+                    n_state = c_state ;
+            end
+            STOP   :begin
+                if(iic_done)
                     n_state = IDLE;
                 else
                     n_state = c_state;
             end
-            RD_START:begin
-                n_state = RD_WAIT;
-            end
-            RD_WAIT :begin
-                if(done)
-                    n_state = TX_START;
-                else
-                    n_state = c_state;
-            end
-            TX_START:begin
-                n_state = TX_WAIT;
-            end
-            TX_WAIT :begin
-                if(tx_done)
-                    n_state = IDLE;
-                else
-                    n_state = c_state;
-            end 
             default: n_state = IDLE;
         endcase
     end
 //输出
     always @(posedge clk or negedge rst_n) begin
         if(!rst_n) begin
-            req         <=0;// IIC 启动
-            rw_ctrl     <=0;// 0:写, 1:读
-            sendnum     <=0;// IIC 发送字节数
-            recvnum     <=0;// IIC 接收字节数
-            wr_data     <=0;// 写入 EEPROM 的数据
-            dout        <=0;// 读出送 UART 的数据
-            dout_vld    <=0;// UART TX 启动
+            rw_ctrl_rg   <= 0;
+            sendnum_rg   <= 0;
+            recvnum_rg   <= 0;
+            addr_rg      <= 0;
+            data_i_iic_rg<= 0;
         end
         else begin
             case (c_state)
-                IDLE    :begin
-                    req         <=0;// IIC 启动
-                    rw_ctrl     <=0;// 0:写, 1:读
-                    sendnum     <=0;// IIC 发送字节数
-                    recvnum     <=0;// IIC 接收字节数
-                    wr_data     <=din_rg;// 写入 EEPROM 的数据
-                    dout        <=rd_data_rg;// 读出送 UART 的数据
-                    dout_vld    <=0;// UART TX 启动
+                 IDLE   :begin
+                    rw_ctrl_rg   <= 0;
+                    sendnum_rg   <= 0;
+                    recvnum_rg   <= 0;
+                    addr_rg      <= 0;
+                    data_i_iic_rg<= 0;
                 end
-                WR_START:begin
-                    req         <=1;// IIC 启动
-                    rw_ctrl     <=0;// 0:写, 1:读
-                    sendnum     <=2;//IIC写字节数(字地址+数据)
-                    recvnum     <=0;//IIC读字节数
-                    wr_data     <=din_rg;// 写入 EEPROM 的数据
-                    dout        <=rd_data_rg;//读出送 UART 的数据
-                    dout_vld    <=0;//UART TX 启动
+                WORR   :begin
+                    if(rx_done)
+                        rw_ctrl_rg   <= rx_data;
+                        sendnum_rg   <= 0;
+                        recvnum_rg   <= 0;
+                        addr_rg      <= 0;
+                        data_i_iic_rg<= 0;
                 end
-                WR_WAIT :begin
-                    req         <=0;// IIC 启动
-                    rw_ctrl     <=0;// 0:写, 1:读
-                    wr_data     <=din_rg;// 写入 EEPROM 的数据
-                    dout        <=rd_data_rg;// 读出送 UART 的数据
-                    dout_vld    <=0;// UART TX 启动
+                SENDNUM:begin
+                    if(rx_done)
+                        sendnum_rg   <= rx_data;
+                        recvnum_rg   <= 0;
+                        addr_rg      <= 0;
+                        data_i_iic_rg<= 0;
                 end
-                RD_START:begin
-                    req         <=1;// IIC 启动
-                    recvnum     <=1;//IIC读字节数
-                    sendnum     <=1;//IIC写字节数(仅字地址)
-                    rw_ctrl     <=0;// 先发写命令(0xA0)+字地址,recvnum≠0 使 iic_0 自动转读
-                    wr_data     <=8'h00;// 地址字节由 iic_0 的 waddr 输入提供,这里置 0
-                    dout        <=rd_data_rg;// 读出送 UART 的数据
+                RECVNUM:begin
+                    if(rx_done)
+                        recvnum_rg   <= rx_data;
+                        addr_rg      <= 0;
+                        data_i_iic_rg<= 0;
                 end
-                RD_WAIT :begin
-                    req         <=0;// IIC 启动
-                    rw_ctrl     <=0;// 保持写命令开头(0xA0+字地址),iic_0 内部自动转读
-                    wr_data     <=din_rg;// 写入 EEPROM 的数据
-                    dout        <=rd_data_rg;// 读出送 UART 的数据
+                ADDR   :begin
+                    if(rx_done)
+                        addr_rg      <= rx_data;
+                        data_i_iic_rg<= 0;
                 end
-                TX_START:begin
-                    wr_data     <=din_rg;// 写入 EEPROM 的数据
-                    dout        <=rd_data_rg;// 读出送 UART 的数据
-                    dout_vld    <=1;// UART TX 启动
+                DATA   :begin
+                    if(rx_done)
+                        data_i_iic_rg<= rx_data;
                 end
-                TX_WAIT :begin
-                    wr_data     <=din_rg;// 写入 EEPROM 的数据
-                    dout        <=rd_data_rg;// 读出送 UART 的数据
-                    dout_vld    <=1;// UART TX 启动
-                end 
+                STOP   :;
                 default: begin
-                    req         <=0;// IIC 启动
-                    rw_ctrl     <=0;// 0:写, 1:读
-                    sendnum     <=0;// IIC 发送字节数
-                    recvnum     <=0;// IIC 接收字节数
-                    wr_data     <=0;// 写入 EEPROM 的数据
-                    dout        <=0;// 读出送 UART 的数据
-                    dout_vld    <=0;// UART TX 启动
+                    rw_ctrl_rg   <= 0;
+                    sendnum_rg   <= 0;
+                    recvnum_rg   <= 0;
+                    addr_rg      <= 0;
+                    data_i_iic_rg<= 0;
                 end 
             endcase
         end
     end
+
+always @(posedge clk or negedge rst_n) begin
+    if(!rst_n)
+        data_temp <= 0;
+    else if(iic_done_w)
+        data_temp <= data_i_iic_rg;
+    else if(rx_done && c_state == DATA)
+        data_temp <= addr_rg;
+end
+
+
+assign  iic_start   = (c_state == STOP)?1:0;
+assign  rw_ctrl     = rw_ctrl_rg;
+assign  sendnum     = sendnum_rg;
+assign  recvnum     = recvnum_rg;
+assign  data_i_iic  = data_i_iic_rg;
 
 endmodule

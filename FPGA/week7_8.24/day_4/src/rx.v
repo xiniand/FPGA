@@ -7,7 +7,7 @@ module rx (
     output  reg         parity_error,
     output  reg [7:0]   data    
 );
-parameter   MODE        = 2;    //0无校验，1奇校验，2偶校验
+parameter   MODE        = 0;    //0无校验，1奇校验，2偶校验
 parameter   CLK_FREQ    = 50_000_000                 ;// 系统时钟频率 
 parameter   BAUD_RATE   = 9600                      ;// 目标波特率
 localparam  COUNT_MAX   = (CLK_FREQ / BAUD_RATE) - 1 ;
