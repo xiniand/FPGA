@@ -341,7 +341,8 @@ module iic_0 (
                     else
                         cnt_bit <= cnt_bit + 1;
                 sendnum_cnt  <=0;
-                data_temp    <=0;
+                if(cnt_bit == 0 && cnt_time == 0)
+                    data_temp    <=0;//每个字节开始时清一次，禁止每拍清零
                 ack_flag     <=0;
 
                 sda_en       <=0;
@@ -358,11 +359,7 @@ module iic_0 (
                     cnt_time     <=0;
                 else
                     cnt_time    <= cnt_time + 1;
-                if(cnt_time == delay - 1)
-                    if(cnt_bit == 7)
-                        cnt_bit      <=0;
-                    else
-                        cnt_bit <= cnt_bit + 1;
+                cnt_bit      <=0;//读完一字节，回RD_DATA时从bit0重新采
                 ack_flag    <= 0;
                 sda_en       <=1;
                 if(cnt_time >= Q_MID && cnt_time <= TQ_MID)
@@ -420,7 +417,5 @@ module iic_0 (
     assign      iic_done_r = (c_state == NACK && cnt_time == MID - 1)?1:0;
     assign      iic_done_w = (c_state == ACK2 && cnt_time == MID - 1)?1:0;
     assign      iic_done   = (c_state == STOP && cnt_time == MID - 1)?1:0;
-
-
 
 endmodule

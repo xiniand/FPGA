@@ -58,7 +58,7 @@ always @(*) begin
     n_cnt_bit   = cnt_bit   ;
     case (c_state)
         IDLE    :begin
-            if(start_pulse)begin
+            if(tx_star)begin
                 n_state = START;
                 n_cnt_bit= 0;//清零发送的位数计数器
             end

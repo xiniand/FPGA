@@ -21,8 +21,6 @@ reg [2:0]   c_state     ,
             n_state     ;
 reg [3:0]   cnt_bit     ,
             n_cnt_bit   ;
-reg         tx_rg       ,//锁存待发送数据
-            tx_done_rg  ;
 reg [1:0]    tx_star_ff;
 wire tx_star_rise;
 always @(posedge clk or negedge rst_n) begin
@@ -58,7 +56,7 @@ always @(*) begin
     n_cnt_bit   = cnt_bit   ;
     case (c_state)
         IDLE    :begin
-            if(start_pulse)begin
+            if(tx_star)begin
                 n_state = START;
                 n_cnt_bit= 0;//清零发送的位数计数器
             end

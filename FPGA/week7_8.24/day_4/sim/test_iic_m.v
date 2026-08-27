@@ -1,17 +1,21 @@
 `timescale 1ns/1ps
-module test_iic();
+module test_iic_m();
     reg               clk         ;
     reg               rst_n       ;
     reg               rx          ;
     wire              tx          ;
-    tri0              sda         ;//数据线总线
-    tri0              scl         ;//时钟线 
+    tri1              sda         ;//数据线总线（弱上拉，模拟 IIC 上拉电阻）
+    tri1              scl         ;//时钟线
 
 parameter CLK_FREQ  = 50_000_000                    ;// 系统时钟频率 
 parameter BAUD_RATE = 9_600                         ;// 目标波特率
 localparam delay    = CLK_FREQ/BAUD_RATE *20        ;
 
-
+// 挂 EEPROM 行为模型
+eeprom_24c02 eeprom_24c02_u(
+    .sda (sda),
+    .scl (scl)
+);
 
 initial begin
     clk <= 0 ;
@@ -26,41 +30,30 @@ end
 
 initial begin
     #500
+    // 命令1：写 1 字节（rw=0, sendnum=1, recvnum=0, addr=0x00, data=0xAA）
     send_data(8'hfe);
     #500
     send_data(8'h00);
-    #500
-    send_data(8'h02);
-    #500
-    send_data(8'h00);
-    #500
-    send_data(8'h11);
-    #500
-    send_data(8'haa);//错误
-    #500
-    send_data(8'hee);
-    
-    #10000
-    send_data(8'hfe);
     #500
     send_data(8'h01);
     #500
     send_data(8'h00);
     #500
-    send_data(8'h01);
+    send_data(8'h00);
+    #500
+    send_data(8'haa);
     #500
     send_data(8'hee);
 
     #10000
+    // 命令2：读 1 字节（rw=1, sendnum=0, recvnum=1）
     send_data(8'hfe);
+    #500
+    send_data(8'h01);
     #500
     send_data(8'h00);
     #500
     send_data(8'h01);
-    #500
-    send_data(8'h01);
-    #500
-    send_data(8'h11);
     #500
     send_data(8'hee);
 end

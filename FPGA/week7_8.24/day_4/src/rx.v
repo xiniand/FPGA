@@ -98,7 +98,7 @@ always @(*) begin
                 if(baud_cnt == 7 && (MODE !=0))begin
                     n_state = PARITY;
                 end
-                else if(MODE == 0)
+                else if(MODE == 0 && baud_cnt == 7)
                     n_state = STOP;
                 else begin
                     n_baud_cnt = baud_cnt + 1;

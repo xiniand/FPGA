@@ -22,7 +22,13 @@ wire                tx_star,
 wire                iic_done_r,
                     iic_done_w,
                     iic_done  ;  
-
+reg [7:0] tx_data_rg;
+always @(posedge clk or negedge rst_n) begin
+    if(!rst_n)          
+        tx_data_rg <= 8'd0;
+    else if(iic_done_r) 
+        tx_data_rg <= data_out;   // 脉冲来时 data_out 还有效
+end
 brg brg_u(
     .clk         (clk           ),
     .rst_n       (rst_n         ),//异步复位信号
@@ -44,7 +50,7 @@ tx tx_u(
     .rst_n       (rst_n         ),
     .tick        (tick          ),
     .tx_star     (iic_done_r    ),
-    .tx_data     (data_out      ),//要发送的数据 
+    .tx_data     (tx_data_rg    ),//要发送的数据 
     .brg_en      (brg_en        ),
     .tx          (tx            ),//发送的数据
     .tx_done     (tx_done       ) //发送一组数据完成信号

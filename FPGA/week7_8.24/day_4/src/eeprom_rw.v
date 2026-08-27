@@ -108,31 +108,31 @@ module eeprom_rw (
                 WORR   :begin
                     if(rx_done)
                         rw_ctrl_rg   <= rx_data;
-                        sendnum_rg   <= 0;
-                        recvnum_rg   <= 0;
-                        addr_rg      <= 0;
-                        data_i_iic_rg<= 0;
+                    sendnum_rg   <= 0;
+                    recvnum_rg   <= 0;
+                    addr_rg      <= 0;
+                    data_i_iic_rg<= 0;
                 end
                 SENDNUM:begin
                     if(rx_done)
                         sendnum_rg   <= rx_data;
-                        recvnum_rg   <= 0;
-                        addr_rg      <= 0;
-                        data_i_iic_rg<= 0;
+                    recvnum_rg   <= 0;
+                    addr_rg      <= 0;
+                    data_i_iic_rg<= 0;
                 end
                 RECVNUM:begin
                     if(rx_done)
                         recvnum_rg   <= rx_data;
-                        addr_rg      <= 0;
-                        data_i_iic_rg<= 0;
+                    addr_rg      <= 0;
+                    data_i_iic_rg<= 0;
                 end
                 ADDR   :begin
                     if(rx_done)
                         addr_rg      <= rx_data;
-                        data_i_iic_rg<= 0;
+                    data_i_iic_rg<= 0;
                 end
                 DATA   :begin
-                    if(rx_done)
+                    if(rx_done && rx_data!= 8'hee)
                         data_i_iic_rg<= rx_data;
                 end
                 STOP   :;
@@ -150,8 +150,8 @@ module eeprom_rw (
 always @(posedge clk or negedge rst_n) begin
     if(!rst_n)
         data_temp <= 0;
-    else if(iic_done_w)
-        data_temp <= data_i_iic_rg;
+    else if(iic_done_w )
+        data_temp <= data_i_iic_rg;    
     else if(rx_done && c_state == DATA)
         data_temp <= addr_rg;
 end
@@ -161,6 +161,6 @@ assign  iic_start   = (c_state == STOP)?1:0;
 assign  rw_ctrl     = rw_ctrl_rg;
 assign  sendnum     = sendnum_rg;
 assign  recvnum     = recvnum_rg;
-assign  data_i_iic  = data_i_iic_rg;
+assign  data_i_iic  = data_temp ;
 
 endmodule
