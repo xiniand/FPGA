@@ -37,7 +37,7 @@ always@(posedge clk or negedge rst_n)
 
 
 
-iic_0 iic_0_u(
+iic_0_1 iic_0_1_u(
     .clk         (clk       ),
     .rst_n       (rst_n     ),
     .iic_start   (iic_start ),//开始通信信号
@@ -47,7 +47,7 @@ iic_0 iic_0_u(
     .recvnum     (8'd0      ),
     .sda         (sda       ),//数据线总线
     .scl         (scl       ),//时钟线
-    .data_in     (data_out  ),//接收到的信号
+    .data_out    (data_out  ),//接收到的信号
     .iic_done_r  (iic_done_r),//读完
     .iic_done_w  (iic_done_w),//写完
     .iic_done    (iic_done  )//写完
