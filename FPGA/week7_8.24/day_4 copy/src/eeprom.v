@@ -9,6 +9,7 @@ module eeprom (
     input           tx_done ,// UART 发送完成（来自 tx.tx_done）
     output          req     ,// IIC 启动（连 iic_0.iic_start）
     output          rw_ctrl ,// 0:写, 1:读（连 iic_0.rw_ctrl）
+    output  [7:0]   waddr   ,// 字地址（连 iic_0.waddr）
     output  [7:0]   sendnum ,// IIC 发送字节数
     output  [7:0]   recvnum ,// IIC 接收字节数
     output  [7:0]   wr_data ,// 写入 EEPROM 的数据（连 iic_0.data_i_iic）
@@ -96,12 +97,18 @@ module eeprom (
     end
 
     // 输出：直接驱动 iic_0 的 start/rw/data/send/recv
+    // 说明：AT24C02 的字节写 = 0xA0 + 字地址 + 数据(3字节)，
+    //       随机读 = 0xA0 + 字地址 + (repeated START) + 0xA1 + 数据 + NACK。
+    //       iic_0 把第 0 个数据字节固定当作字地址(waddr)发送，
+    //       因此写操作 sendnum=2(字地址+数据)，读操作 sendnum=1(仅字地址)，
+    //       recvnum=1 让 iic_0 在发完字地址后自动再发 START 转入读。
     assign req      = (state == WR_START) || (state == RD_START);
-    assign rw_ctrl  = (state == RD_START) || (state == RD_WAIT) ||
-                      (state == TX_START) || (state == TX_WAIT);
-    assign sendnum  = ((state == WR_START) || (state == WR_WAIT)) ? 8'd1 : 8'd0;
+    assign rw_ctrl  = 1'b0;   // 读写都从"写命令(0xA0)+字地址"开始
+    assign sendnum  = ((state == WR_START) || (state == WR_WAIT)) ? 8'd2 :
+                      ((state == RD_START) || (state == RD_WAIT)) ? 8'd1 : 8'd0;
     assign recvnum  = ((state == RD_START) || (state == RD_WAIT)) ? 8'd1 : 8'd0;
     assign wr_data  = din_r;
+    assign waddr    = 8'h00;  // 固定读写地址 0x00（改这里可换地址）
     assign dout     = rd_data_r;
     assign dout_vld = (state == TX_START) || (state == TX_WAIT);
 

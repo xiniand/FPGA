@@ -21,7 +21,8 @@ wire    [7:0]       wr_data ,
                     data_out;
 
 wire    [7:0]       recvnum,
-                    sendnum;
+                    sendnum,
+                    waddr   ;
 wire                dout_vld,
                     req;
 
@@ -38,14 +39,11 @@ key key_u(
     .flag(flag   )
 );
 
-// 注意：brg_en 不能接 tx 的输出反馈！
-// tx 在 IDLE 时 brg_en=0 → tick 不来 → tx 永远出不了 IDLE（死锁）
-// 所以这里把 brg 常开，tick 自由运行，tx 靠 tx_star 对齐 tick 启动
 brg brg_u(
-    .clk         (clk        ),
-    .rst_n       (rst_n      ),//异步复位信号
-    .brg_en      (1'b1       ),
-    .tick        (tick       ) //bit脉冲
+    .clk         (clk           ),
+    .rst_n       (rst_n         ),//异步复位信号
+    .brg_en      (1'b1          ),
+    .tick        (tick          ) //bit脉冲
 );
 
 rx rx_u(
@@ -58,47 +56,49 @@ rx rx_u(
 );
 
 tx tx_u(
-    .clk         (clk        ),
-    .rst_n       (rst_n      ),
-    .tick        (tick       ),
-    .tx_star     (dout_vld   ),
-    .tx_data     (tx_data    ),//要发送的数据 
-    .brg_en      (brg_en     ),
-    .tx          (tx         ),//发送的数据
-    .tx_done     (tx_done    ) //发送一组数据完成信号
+    .clk         (clk           ),
+    .rst_n       (rst_n         ),
+    .tick        (tick          ),
+    .tx_star     (dout_vld      ),
+    .tx_data     (tx_data       ),//要发送的数据 
+    .brg_en      (brg_en        ),
+    .tx          (tx            ),//发送的数据
+    .tx_done     (tx_done       ) //发送一组数据完成信号
 );
 
 iic_0 iic_0_u(
-    .clk         (clk        ),
-    .rst_n       (rst_n      ),
-    .iic_start   (req        ),//开始通信信号
-    .rw_ctrl     (rw_ctrl    ),//读写控制0写1读
-    .data_i_iic  (wr_data    ),//要发送的信号
-    .sendnum     (sendnum    ),
-    .recvnum     (recvnum    ),
-    .sda         (sda        ),//数据线总线
-    .scl         (scl        ),//时钟线     
-    .data_out    (data_out   ) ,//接收到的信号
-    .iic_done_r  (iic_done_r ),//读完
-    .iic_done_w  (iic_done_w ),//写完
-    .iic_done    (iic_done   )  //写完
+    .clk         (clk           ),
+    .rst_n       (rst_n         ),
+    .iic_start   (req           ),//开始通信信号
+    .rw_ctrl     (rw_ctrl       ),//读写控制0写1读
+    .waddr       (waddr         ),//字地址
+    .data_i_iic  (wr_data       ),//要发送的信号
+    .sendnum     (sendnum       ),
+    .recvnum     (recvnum       ),
+    .sda         (sda           ),//数据线总线
+    .scl         (scl           ),//时钟线     
+    .data_out    (data_out      ) ,//接收到的信号
+    .iic_done_r  (iic_done_r    ),//读完
+    .iic_done_w  (iic_done_w    ),//写完
+    .iic_done    (iic_done      )  //写完
 );
 
 eeprom_rw eeprom_rw_u(
-    .clk         (clk        ),
-    .rst_n       (rst_n      ),
-    .din_vld     (rx_done    ),// UART 收到一字节
-    .din         (rx_data    ),// UART 接收数据
-    .rd_en       (flag       ),// 按键触发读 EEPROM
-    .done        (done       ),// IIC 完成信号
-    .rd_data     (data_out   ),// IIC 读回数据
-    .tx_done     (tx_done    ),// UART 发送完成
-    .req         (req        ),// IIC 启动
-    .rw_ctrl     (rw_ctrl    ),// 0:写, 1:读
-    .sendnum     (sendnum    ),// IIC 发送字节数
-    .recvnum     (recvnum    ),// IIC 接收字节数
-    .wr_data     (wr_data    ),// 写入 EEPROM 的数据
-    .dout        (tx_data    ),// 读出送 UART 的数据
-    .dout_vld    (dout_vld   ) // UART TX 启动
+    .clk         (clk           ),
+    .rst_n       (rst_n         ),
+    .din_vld     (rx_done       ),// UART 收到一字节
+    .din         (rx_data       ),// UART 接收数据
+    .rd_en       (flag          ),// 按键触发读 EEPROM
+    .done        (done          ),// IIC 完成信号
+    .rd_data     (data_out      ),// IIC 读回数据
+    .tx_done     (tx_done       ),// UART 发送完成
+    .req         (req           ),// IIC 启动
+    .rw_ctrl     (rw_ctrl       ),// 0:写, 1:读
+    .waddr       (waddr         ),// 字地址
+    .sendnum     (sendnum       ),// IIC 发送字节数
+    .recvnum     (recvnum       ),// IIC 接收字节数
+    .wr_data     (wr_data       ),// 写入 EEPROM 的数据
+    .dout        (tx_data       ),// 读出送 UART 的数据
+    .dout_vld    (dout_vld      ) // UART TX 启动
 );
 endmodule

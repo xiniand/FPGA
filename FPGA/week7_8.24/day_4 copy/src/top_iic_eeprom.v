@@ -23,6 +23,7 @@ module top_iic_eeprom (
     wire            iic_start   ;// IIC 启动
     wire            iic_rw      ;// IIC 读写控制
     wire    [7:0]   iic_wdata   ;// IIC 发送数据
+    wire    [7:0]   iic_waddr   ;// IIC 字地址(EEPROM 地址)
     wire    [7:0]   iic_rdata   ;// IIC 接收数据
     wire    [7:0]   iic_sendnum ;// IIC 发送字节数
     wire    [7:0]   iic_recvnum ;// IIC 接收字节数
@@ -87,6 +88,7 @@ module top_iic_eeprom (
         .rst_n      (rst_n  ),
         .iic_start  (iic_start),
         .rw_ctrl    (iic_rw ),
+        .waddr      (iic_waddr),
         .data_i_iic (iic_wdata),
         .sendnum    (iic_sendnum),
         .recvnum    (iic_recvnum),
@@ -117,6 +119,7 @@ module top_iic_eeprom (
         .tx_done    (tx_done),
         .req        (iic_start),
         .rw_ctrl    (iic_rw ),
+        .waddr      (iic_waddr),
         .sendnum    (iic_sendnum),
         .recvnum    (iic_recvnum),
         .wr_data    (iic_wdata),

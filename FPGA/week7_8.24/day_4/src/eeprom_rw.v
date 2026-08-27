@@ -9,12 +9,16 @@ module eeprom_rw (
     input               tx_done ,// UART 发送完成
     output  reg         req     ,// IIC 启动
     output  reg         rw_ctrl ,// 0:写, 1:读
+    output      [7:0]   waddr   ,// 字地址(EEPROM 地址,固定 ADDR)
     output  reg [7:0]   sendnum ,// IIC 发送字节数
     output  reg [7:0]   recvnum ,// IIC 接收字节数
     output  reg [7:0]   wr_data ,// 写入 EEPROM 的数据
     output  reg [7:0]   dout    ,// 读出送 UART 的数据
     output  reg         dout_vld // UART TX 启动
 );
+
+    parameter ADDR = 8'h00;     // EEPROM 读写地址(固定 0x00,可改)
+    assign  waddr = ADDR;
 
     localparam  IDLE        = 6'd0      ,//空闲态
                 WR_START    = 6'd1      ,//写开始信号
@@ -133,7 +137,7 @@ module eeprom_rw (
                 WR_START:begin
                     req         <=1;// IIC 启动
                     rw_ctrl     <=0;// 0:写, 1:读
-                    sendnum     <=1;//IIC写字节数
+                    sendnum     <=2;//IIC写字节数(字地址+数据)
                     recvnum     <=0;//IIC读字节数
                     wr_data     <=din_rg;// 写入 EEPROM 的数据
                     dout        <=rd_data_rg;//读出送 UART 的数据
@@ -149,14 +153,14 @@ module eeprom_rw (
                 RD_START:begin
                     req         <=1;// IIC 启动
                     recvnum     <=1;//IIC读字节数
-                    sendnum     <=0;//IIC写字节数
-                    rw_ctrl     <=1;// 0:写, 1:读
-                    wr_data     <=din_rg;// 写入 EEPROM 的数据
+                    sendnum     <=1;//IIC写字节数(仅字地址)
+                    rw_ctrl     <=0;// 先发写命令(0xA0)+字地址,recvnum≠0 使 iic_0 自动转读
+                    wr_data     <=8'h00;// 地址字节由 iic_0 的 waddr 输入提供,这里置 0
                     dout        <=rd_data_rg;// 读出送 UART 的数据
                 end
                 RD_WAIT :begin
                     req         <=0;// IIC 启动
-                    rw_ctrl     <=1;// 0:写, 1:读
+                    rw_ctrl     <=0;// 保持写命令开头(0xA0+字地址),iic_0 内部自动转读
                     wr_data     <=din_rg;// 写入 EEPROM 的数据
                     dout        <=rd_data_rg;// 读出送 UART 的数据
                 end
