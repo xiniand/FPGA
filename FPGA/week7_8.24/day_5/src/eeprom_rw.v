@@ -189,16 +189,5 @@ assign  sendnum     = sendnum_rg;
 assign  recvnum     = recvnum_rg;
 assign  data_i_iic  = data_temp ;
 
-/* fifo_data	fifo_data_inst (
-	.aclr   ( ~rst_n),
-	.clock  ( clk   ),
-	.data   ( data  ),
-	.rdreq  ( rdreq ),
-	.wrreq  ( wrreq ),
-	.empty  ( empty ),
-	.full   ( full  ),
-	.q      ( q     ),
-	.usedw  ( usedw )
-);
- */
+
 endmodule
