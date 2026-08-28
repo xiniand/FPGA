@@ -27,7 +27,9 @@ module eeprom_rw (
     reg [7:0]   sendnum_cnt         ;//写数据个数计数
     reg [7:0]   recvnum_cnt         ;//读数据个数计数
     reg [7:0]   addr_rg             ;    
-    reg [7:0]   data_i_iic_rg       ;//接收一字节信号打一拍
+    reg [7:0]   databuf [0:15]      ;//多字节写数据缓冲(AT24C02页写8字节,16深够用)
+    reg [3:0]   wr_idx              ;//帧解析:已收数据字节数
+    reg [3:0]   send_idx            ;//iic_done_w:已切换到总线的数据字节数
     reg [7:0]   data_temp           ;
 
 //状态切换
@@ -96,9 +98,9 @@ module eeprom_rw (
             sendnum_rg   <= 0;
             recvnum_rg   <= 0;
             addr_rg      <= 0;
-            data_i_iic_rg<= 0;
             sendnum_cnt  <= 0;
             recvnum_cnt  <= 0;
+            wr_idx       <= 0;
         end
         else begin
             case (c_state)
@@ -107,9 +109,9 @@ module eeprom_rw (
                     sendnum_rg      <= 0;
                     recvnum_rg      <= 0;
                     addr_rg         <= 0;
-                    data_i_iic_rg   <= 0;
                     sendnum_cnt     <= 0;
                     recvnum_cnt     <= 0;
+                    wr_idx          <= 0;
                 end
                 WORR   :begin
                     if(rx_done)
@@ -117,7 +119,6 @@ module eeprom_rw (
                     sendnum_rg   <= 0;
                     recvnum_rg   <= 0;
                     addr_rg      <= 0;
-                    data_i_iic_rg<= 0;
                     sendnum_cnt     <= 0;
                     recvnum_cnt     <= 0;
                 end
@@ -126,7 +127,6 @@ module eeprom_rw (
                         sendnum_rg   <= rx_data;
                     recvnum_rg   <= 0;
                     addr_rg      <= 0;
-                    data_i_iic_rg<= 0;
                     sendnum_cnt     <= 0;
                     recvnum_cnt     <= 0;
                 end
@@ -134,7 +134,6 @@ module eeprom_rw (
                     if(rx_done)
                         recvnum_rg   <= rx_data;
                     addr_rg      <= 0;
-                    data_i_iic_rg<= 0;
                     sendnum_cnt     <= 0;
                     recvnum_cnt     <= 0;
                 end
@@ -143,12 +142,12 @@ module eeprom_rw (
                         addr_rg      <= rx_data;
                         sendnum_cnt     <= sendnum_cnt + 1;
                     end
-                    data_i_iic_rg<= 0;
                     recvnum_cnt     <= 0;
                 end
                 DATA   :begin
                     if(rx_done)begin
-                        data_i_iic_rg<= rx_data;
+                        databuf[wr_idx] <= rx_data;//数据依次进缓冲
+                        wr_idx          <= wr_idx + 1;
                         if(sendnum_cnt < sendnum_rg)
                             sendnum_cnt     <= sendnum_cnt + 1;
                     end
@@ -159,21 +158,28 @@ module eeprom_rw (
                     sendnum_rg   <= 0;
                     recvnum_rg   <= 0;
                     addr_rg      <= 0;
-                    data_i_iic_rg<= 0;
                 end 
             endcase
         end
     end
 
 always @(posedge clk or negedge rst_n) begin
-    if(!rst_n)                          
+    if(!rst_n) begin
         data_temp <= 0;
-    else if(iic_done_w)                 
-        data_temp <= data_i_iic_rg;
-    else if(rx_done && c_state == ADDR) 
-        data_temp <= rx_data;  
-    else if(rx_done && c_state == DATA) 
-        data_temp <= addr_rg;  
+        send_idx  <= 0;
+    end
+    else if(c_state == IDLE)begin//帧间清零:每帧都从databuf[0]开始取数(核心修复)
+        data_temp <= 0;
+        send_idx  <= 0;
+    end
+    else if(iic_done_w)begin//每写完一个字节(含地址),切下一个数据进 data_temp
+        data_temp <= databuf[send_idx];
+        send_idx  <= send_idx + 1;
+    end
+    else if(rx_done && c_state == ADDR)
+        data_temp <= rx_data;
+    else if(rx_done && c_state == DATA)
+        data_temp <= addr_rg;
 end
 
 
@@ -183,4 +189,16 @@ assign  sendnum     = sendnum_rg;
 assign  recvnum     = recvnum_rg;
 assign  data_i_iic  = data_temp ;
 
+/* fifo_data	fifo_data_inst (
+	.aclr   ( ~rst_n),
+	.clock  ( clk   ),
+	.data   ( data  ),
+	.rdreq  ( rdreq ),
+	.wrreq  ( wrreq ),
+	.empty  ( empty ),
+	.full   ( full  ),
+	.q      ( q     ),
+	.usedw  ( usedw )
+);
+ */
 endmodule

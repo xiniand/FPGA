@@ -369,10 +369,13 @@ module iic_0 (
                 if(cnt_time == Q_MID)
                     recvnum_cnt <= recvnum_cnt + 1;
 
-                if(recvnum_rg - 1 == recvnum_cnt  )
-                    sda_out <= 1;
-                else
-                    sda_out <= 0;
+                // NACK判定在槽起始(SCL尚低)做一次并锁存，禁止在SCL高电平期间翻转sda_out
+                if(cnt_time == 0)begin
+                    if(recvnum_cnt == recvnum_rg - 1)
+                        sda_out <= 1;
+                    else
+                        sda_out <= 0;
+                end
             end
             STOP       :begin
                 sendnum_cnt  <=0;

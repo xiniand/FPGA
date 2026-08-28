@@ -8,4 +8,4 @@ fifo_data	fifo_data_inst (
 	.full ( full_sig ),
 	.q ( q_sig ),
 	.usedw ( usedw_sig )
-	);
+);
