@@ -4,8 +4,10 @@ module top_iic_eeprom (
     input           rx      ,
     inout           scl     ,
     inout           sda     ,
+    output          RTC     ,
     output          tx
 );
+assign  RTC = 0;
 wire                parity_error;
 wire                brg_en  ;
 wire    [7:0]       rx_data ;
